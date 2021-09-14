@@ -1,0 +1,20 @@
+{
+    "project_name":       "bootloader",
+    "project_path":       "/home/relyq/dev/esp/esp-idf/components/bootloader/subproject",
+    "build_dir":          "/home/relyq/dev/esp/mqtt-point/build/bootloader",
+    "config_file":        "/home/relyq/dev/esp/mqtt-point/sdkconfig",
+    "config_defaults":    "",
+    "app_elf":            "bootloader.elf",
+    "app_bin":            "bootloader.bin",
+    "git_revision":       "v4.4-dev-4-g73db14240",
+    "target":             "esp32",
+    "phy_data_partition": "",
+    "monitor_baud" :      "115200",
+    "monitor_toolprefix": "xtensa-esp32-elf-",
+    "config_environment" : {
+        "COMPONENT_KCONFIGS" : "/home/relyq/dev/esp/esp-idf/components/efuse/Kconfig;/home/relyq/dev/esp/esp-idf/components/esp32/Kconfig;/home/relyq/dev/esp/esp-idf/components/esp_common/Kconfig;/home/relyq/dev/esp/esp-idf/components/esp_system/Kconfig;/home/relyq/dev/esp/esp-idf/components/log/Kconfig;/home/relyq/dev/esp/esp-idf/components/spi_flash/Kconfig",
+        "COMPONENT_KCONFIGS_PROJBUILD" : "/home/relyq/dev/esp/esp-idf/components/bootloader/Kconfig.projbuild;/home/relyq/dev/esp/esp-idf/components/esptool_py/Kconfig.projbuild;/home/relyq/dev/esp/esp-idf/components/partition_table/Kconfig.projbuild"
+    },
+    "build_components" : [ "bootloader", "bootloader_support", "efuse", "esp32", "esp_common", "esp_hw_support", "esp_rom", "esp_system", "esptool_py", "hal", "log", "main", "micro-ecc", "partition_table", "soc", "spi_flash", "xtensa", "" ],
+    "build_component_paths" : [ "/home/relyq/dev/esp/esp-idf/components/bootloader", "/home/relyq/dev/esp/esp-idf/components/bootloader_support", "/home/relyq/dev/esp/esp-idf/components/efuse", "/home/relyq/dev/esp/esp-idf/components/esp32", "/home/relyq/dev/esp/esp-idf/components/esp_common", "/home/relyq/dev/esp/esp-idf/components/esp_hw_support", "/home/relyq/dev/esp/esp-idf/components/esp_rom", "/home/relyq/dev/esp/esp-idf/components/esp_system", "/home/relyq/dev/esp/esp-idf/components/esptool_py", "/home/relyq/dev/esp/esp-idf/components/hal", "/home/relyq/dev/esp/esp-idf/components/log", "/home/relyq/dev/esp/esp-idf/components/bootloader/subproject/main", "/home/relyq/dev/esp/esp-idf/components/bootloader/subproject/components/micro-ecc", "/home/relyq/dev/esp/esp-idf/components/partition_table", "/home/relyq/dev/esp/esp-idf/components/soc", "/home/relyq/dev/esp/esp-idf/components/spi_flash", "/home/relyq/dev/esp/esp-idf/components/xtensa", "" ]
+}
