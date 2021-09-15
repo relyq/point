@@ -68,7 +68,7 @@ void DHT_task(void *pvParameter) {
   static const dht_sensor_type_t sensor_type = DHT_TYPE_DHT11;
   static const gpio_num_t dht_gpio = 4;
   struct sensor_msg DHT_1;
-  strcpy(DHT_1.DeviceClass, "03");
+  strcpy(DHT_1.DeviceClass, "08");
   strcpy(DHT_1.IdDevice, "000D2BF9");
   strcpy(DHT_1.MsgType, "02");
 
@@ -93,7 +93,7 @@ void DHT_test0(void *pvParameter) {
   printf("Starting DHT Task\n\n");
 
   struct sensor_msg DHT_2;
-  strcpy(DHT_2.DeviceClass, "03");
+  strcpy(DHT_2.DeviceClass, "08");
   strcpy(DHT_2.IdDevice, "523G9VK5");
   strcpy(DHT_2.MsgType, "02");
 
@@ -114,7 +114,7 @@ void DHT_test1(void *pvParameter) {
   printf("Starting DHT Task\n\n");
 
   struct sensor_msg DHT_3;
-  strcpy(DHT_3.DeviceClass, "03");
+  strcpy(DHT_3.DeviceClass, "08");
   strcpy(DHT_3.IdDevice, "629X2LJ3");
   strcpy(DHT_3.MsgType, "02");
 
