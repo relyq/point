@@ -129,25 +129,6 @@ void DHT_test1(void *pvParameter) {
   }
 }
 
-//
-// Note: this function is for testing purposes only publishing part of the
-// active partition
-//       (to be checked against the original binary)
-//
-static void send_binary(esp_mqtt_client_handle_t client) {
-  spi_flash_mmap_handle_t out_handle;
-  const void *binary_address;
-  const esp_partition_t *partition = esp_ota_get_running_partition();
-  esp_partition_mmap(partition, 0, partition->size, SPI_FLASH_MMAP_DATA,
-                     &binary_address, &out_handle);
-  // sending only the configured portion of the partition (if it's less than the
-  // partition size)
-  int binary_size = MIN(CONFIG_BROKER_BIN_SIZE_TO_SEND, partition->size);
-  int msg_id = esp_mqtt_client_publish(client, "/topic/binary", binary_address,
-                                       binary_size, 0, 0);
-  ESP_LOGI(TAG, "binary sent with msg_id=%d", msg_id);
-}
-
 static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event) {
   esp_mqtt_client_handle_t client = event->client;
   int msg_id;
@@ -155,19 +136,14 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event) {
   switch (event->event_id) {
     case MQTT_EVENT_CONNECTED:
       ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
-      msg_id = esp_mqtt_client_subscribe(client, "test/dht", 1);
+      msg_id = esp_mqtt_client_subscribe(client, "test/cmd/led", 1);
       ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
-
       break;
     case MQTT_EVENT_DISCONNECTED:
       ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
       break;
-
     case MQTT_EVENT_SUBSCRIBED:
       ESP_LOGI(TAG, "MQTT_EVENT_SUBSCRIBED, msg_id=%d", event->msg_id);
-      msg_id = esp_mqtt_client_publish(client, "test/dht",
-                                       "{\n\"data\": \"0\"\n}", 0, 0, 0);
-      ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
       break;
     case MQTT_EVENT_UNSUBSCRIBED:
       ESP_LOGI(TAG, "MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
@@ -179,11 +155,43 @@ static esp_err_t mqtt_event_handler_cb(esp_mqtt_event_handle_t event) {
       ESP_LOGI(TAG, "MQTT_EVENT_DATA");
       printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
       printf("DATA=%.*s\r\n", event->data_len, event->data);
-      if (strncmp(event->data, "send binary please", event->data_len) == 0) {
-        ESP_LOGI(TAG, "Sending the binary");
-        send_binary(client);
+
+      cJSON *json_cmd = cJSON_Parse(event->data);
+      cJSON *json_idmsg = cJSON_GetObjectItem(json_cmd, "IdMsg");
+      char str_idmsg[8];
+      char str_response_status[2] = "2";
+      if (cJSON_IsString(json_idmsg) && (json_idmsg->valuestring != NULL)) {
+        strcpy(str_idmsg, json_idmsg->valuestring);
+        gpio_set_level(2, !gpio_get_level(2));
+        strcpy(str_response_status, "0");
+      } else {
+        printf("error: idmsg is not string or is null");
+        strcpy(str_idmsg, "error");
       }
 
+      char *str_response_led;
+      cJSON *json_led = cJSON_CreateObject();
+      cJSON_AddStringToObject(json_led, "IdMsg", str_idmsg);
+      cJSON_AddStringToObject(json_led, "Status", str_response_status);
+      str_response_led = cJSON_Print(json_led);
+
+      cJSON_Delete(json_led);
+      cJSON_Delete(json_cmd);
+
+      char cmd_topic[128];
+      char response_topic[128];
+
+      sprintf(cmd_topic, "%.*s", event->topic_len, event->topic);
+      char *pch = strstr(cmd_topic, "cmd/");
+      memcpy(response_topic, cmd_topic, pch - cmd_topic);
+      memcpy(response_topic + (pch - cmd_topic), "cmdAck/", strlen("cmdAck/"));
+      strcpy(response_topic + (pch - cmd_topic) + strlen("cmdAck/"),
+             pch + strlen("cmd/"));
+
+      printf("received: %s\nsent: %s\n", cmd_topic, response_topic);
+
+      esp_mqtt_client_publish(client, response_topic, str_response_led, 0, 1,
+                              0);
       break;
     case MQTT_EVENT_ERROR:
       ESP_LOGI(TAG, "MQTT_EVENT_ERROR");
@@ -226,8 +234,6 @@ static void mqtt_app_start(void *pvParameter) {
       .username = "points",
       .password = "Fm7G7MtV",
       .keepalive = 60,
-      //.use_secure_element = true,
-      //.use_global_ca_store = true,
       .cert_pem = (const char *)mqtt_eclipse_org_pem_start,
   };
 
@@ -238,7 +244,7 @@ static void mqtt_app_start(void *pvParameter) {
 
   while (1) {
     char *msgbuffer = NULL;
-    char topic[64] = "test/";
+    char topic[128] = "test/";
     struct sensor_msg MQTT_MSG;
 
     xQueueReceive(xMQTTDHTQueue, &MQTT_MSG, portMAX_DELAY);
@@ -249,6 +255,8 @@ static void mqtt_app_start(void *pvParameter) {
     cJSON_AddStringToObject(mqtt_infomsg, "MsgType", MQTT_MSG.MsgType);
     cJSON_AddStringToObject(mqtt_infomsg, "MsgContent", MQTT_MSG.MsgContent);
     msgbuffer = cJSON_Print(mqtt_infomsg);
+
+    cJSON_Delete(mqtt_infomsg);
 
     strcat(topic, MQTT_MSG.IdDevice);
     esp_mqtt_client_publish(client, topic, msgbuffer, 0, 1, 0);
@@ -280,6 +288,8 @@ void app_main(void) {
    * examples/protocols/README.md for more information about this function.
    */
   ESP_ERROR_CHECK(example_connect());
+
+  gpio_set_direction(2, GPIO_MODE_INPUT_OUTPUT);
 
   xMQTTDHTQueue = xQueueCreate(3, sizeof(struct sensor_msg));
 
