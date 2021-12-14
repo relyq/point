@@ -31,6 +31,8 @@
 #include "freertos/portmacro.h"
 #include "freertos/task.h"
 #include "hal/gpio_types.h"
+#include "http/http_handlers.h"
+#include "http_app.h"
 #include "lwip/dns.h"
 #include "lwip/netdb.h"
 #include "lwip/sockets.h"
@@ -40,6 +42,7 @@
 #include "protocol_examples_common.h"
 #include "sdkconfig.h"
 #include "sensors/sensors.h"
+#include "wifi_manager.h"
 
 static const char *TAG = "MQTT_POINT";
 
@@ -154,6 +157,8 @@ void app_main(void) {
   esp_log_level_set("TRANSPORT", ESP_LOG_VERBOSE);
   esp_log_level_set("OUTBOX", ESP_LOG_VERBOSE);
 
+  wifi_manager_start();
+
   ESP_ERROR_CHECK(nvs_flash_init());
   ESP_ERROR_CHECK(esp_netif_init());
   ESP_ERROR_CHECK(esp_event_loop_create_default());
@@ -162,7 +167,10 @@ void app_main(void) {
    * menuconfig. Read "Establishing Wi-Fi or Ethernet Connection" section in
    * examples/protocols/README.md for more information about this function.
    */
-  ESP_ERROR_CHECK(example_connect());
+  // ESP_ERROR_CHECK(example_connect());
+
+  http_app_set_handler_hook(HTTP_GET, &point_get_handler);
+  http_app_set_handler_hook(HTTP_POST, &point_post_handler);
 
   gpio_set_direction(2, GPIO_MODE_INPUT_OUTPUT);
 
