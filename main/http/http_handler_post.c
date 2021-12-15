@@ -18,6 +18,27 @@ esp_err_t point_post_handler(httpd_req_t* req) {
       // aca hago algo con codigo_id
       ESP_LOGI(TAG, "codigo_id: %s", codigo_id);
 
+      // esp_http_client_config_t config = {}
+
+      esp_http_client_init(&config);
+
+      // POST
+      // const char* post_data = "{\"field1\":\"value1\"}";
+      // esp_http_client_set_url(client, "http://httpbin.org/post");
+      esp_http_client_set_method(client, HTTP_METHOD_POST);
+      esp_http_client_set_header(client, "Content-Type", "application/json");
+      // esp_http_client_set_post_field(client, post_data, strlen(post_data));
+      err = esp_http_client_perform(client);
+      if (err == ESP_OK) {
+        ESP_LOGI(TAG, "HTTP POST Status = %d, content_length = %lld",
+                 esp_http_client_get_status_code(client),
+                 esp_http_client_get_content_length(client));
+      } else {
+        ESP_LOGE(TAG, "HTTP POST request failed: %s", esp_err_to_name(err));
+      }
+
+      esp_http_client_cleanup(client);
+
       free(codigo_id);
 
       httpd_resp_set_status(req, "200 OK");

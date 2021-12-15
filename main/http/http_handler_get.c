@@ -26,7 +26,7 @@ esp_err_t point_get_handler(httpd_req_t* req) {
     httpd_resp_set_status(req, "200 OK");
     httpd_resp_set_type(req, "text/javascript");
     httpd_resp_send(req, (char*)postearjaja_js_start,
-                    postearjaja_js_end - postearjaja_js_start);
+                    postearjaja_js_end - 1 - postearjaja_js_start);
   } else {
     httpd_resp_send_404(req);
   }
