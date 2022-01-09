@@ -24,12 +24,26 @@ esp_err_t point_post_handler(httpd_req_t* req) {
                                   codigo_id_len + 1);
       ESP_LOGI(TAG, "codigo_id: %s", codigo_id);
 
+      char str_mac[13] = {0};
+
+      esp_err_t err;
+      uint8_t mac[6];
+      err = esp_efuse_mac_get_default(mac);
+      if (err == ESP_OK) {
+        sprintf(str_mac, "%02x%02x%02x%02x%02x%02x", mac[0], mac[1], mac[2],
+                mac[3], mac[4], mac[5]);
+        ESP_LOGI(TAG, "%s", str_mac);
+      } else {
+        ESP_LOGE(TAG, "esp_efuse_mac: %s\n", esp_err_to_name(err));
+      }
+
       char local_response_buffer[MAX_HTTP_OUTPUT_BUFFER] = {0};
 
       esp_http_client_config_t config = {
           .url =
-              "http://181.45.14.233:1234/api/maquina/asignarMaquinaConCodigo",
-          //.url = "http://httpbin.org/post",
+              //"http://181.45.14.233:1234/api/maquina/asignarMaquinaConCodigo",
+          "http://192.168.1.200/api/maquina/asignarMaquinaConCodigo",
+          //"http://httpbin.org/post",
           .method = HTTP_METHOD_POST,
           .event_handler = http_event_handler,
           .user_data = local_response_buffer,
@@ -41,7 +55,7 @@ esp_err_t point_post_handler(httpd_req_t* req) {
       // id .json
       cJSON* json_id = cJSON_CreateObject();
       cJSON_AddStringToObject(json_id, "codigoUsuario", codigo_id);
-      cJSON_AddStringToObject(json_id, "nombreMaquina", "000D2BF9");
+      cJSON_AddStringToObject(json_id, "nombreMaquina", str_mac);
       const char* post_data = cJSON_Print(json_id);
       cJSON_Delete(json_id);
 
@@ -50,7 +64,7 @@ esp_err_t point_post_handler(httpd_req_t* req) {
       // POST
       esp_http_client_set_header(client, "Content-Type", "application/json");
       esp_http_client_set_post_field(client, post_data, strlen(post_data));
-      esp_err_t err = esp_http_client_perform(client);
+      err = esp_http_client_perform(client);
 
       if (err == ESP_OK) {
         ESP_LOGI(TAG, "HTTP POST Status = %d, content_length = %d",
