@@ -42,7 +42,7 @@ esp_err_t point_post_handler(httpd_req_t* req) {
       esp_http_client_config_t config = {
           .url =
               //"http://181.45.14.233:1234/api/maquina/asignarMaquinaConCodigo",
-          "http://192.168.1.200/api/maquina/asignarMaquinaConCodigo",
+          "http://192.168.1.200:41062/www/api/maquina/asignarMaquinaConCodigo",
           //"http://httpbin.org/post",
           .method = HTTP_METHOD_POST,
           .event_handler = http_event_handler,
