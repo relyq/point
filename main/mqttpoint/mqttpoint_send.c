@@ -20,5 +20,4 @@ void mqttpoint_send(esp_mqtt_client_handle_t client) {
 
   strcat(topic, MQTT_MSG.IdDevice);
   esp_mqtt_client_publish(client, topic, msgbuffer, 0, 1, 0);
-  printf("sent message to topic: \"%s\"\n", topic);
 }

@@ -16,7 +16,7 @@ void DHT_task(void *pvParameter) {
     float temp;
     float hum;
     if (dht_read_float_data(sensor_type, dht_gpio, &hum, &temp) == ESP_OK) {
-      printf("DHT_1: temp: %.2fC humidity: %.2f\n", temp, hum);
+      // printf("DHT_1: temp: %.2fC humidity: %.2f\n", temp, hum);
       sprintf(DHT_1.MsgContent, "T%05.2fH%02.2f", temp, hum);
       xQueueSendToBack(xMQTTDHTQueue, &DHT_1, 0);
     } else {

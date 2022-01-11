@@ -13,7 +13,7 @@ void DHT_test1(void *pvParameter) {
   while (1) {
     float temp = 6.5;
     float hum = 67;
-    printf("DHT_3: temp: %.2fC humidity: %.2f\n", temp, hum);
+    // printf("DHT_3: temp: %.2fC humidity: %.2f\n", temp, hum);
     sprintf(DHT_3.MsgContent, "T%05.2fH%02.2f", temp, hum);
     xQueueSendToBack(xMQTTDHTQueue, &DHT_3, 0);
 
