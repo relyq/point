@@ -157,11 +157,8 @@ void app_main(void) {
   esp_log_level_set("TRANSPORT", ESP_LOG_VERBOSE);
   esp_log_level_set("OUTBOX", ESP_LOG_VERBOSE);
 
-  wifi_manager_start();
-
   ESP_ERROR_CHECK(nvs_flash_init());
-  ESP_ERROR_CHECK(esp_netif_init());
-  ESP_ERROR_CHECK(esp_event_loop_create_default());
+  wifi_manager_start();
 
   /* This helper function configures Wi-Fi or Ethernet, as selected in
    * menuconfig. Read "Establishing Wi-Fi or Ethernet Connection" section in
@@ -180,4 +177,21 @@ void app_main(void) {
   xTaskCreate(&DHT_test0, "DHT_test0", 2048, NULL, 5, NULL);
   xTaskCreate(&DHT_test1, "DHT_test1", 2048, NULL, 5, NULL);
   xTaskCreate(&mqtt_app_start, "mqtt_app_start", 4096, NULL, 5, NULL);
+
+  /*
+  // configUSE_TRACE_FACILITY must be enabled
+  vTaskDelay(pdMS_TO_TICKS(5000));
+  UBaseType_t task_number = uxTaskGetNumberOfTasks();
+  TaskStatus_t *system_state = pvPortMalloc(task_number * sizeof(TaskStatus_t));
+  task_number = uxTaskGetSystemState(system_state, task_number, NULL);
+
+  for (size_t i = 0; i < task_number; i++) {
+    printf("%d:%s:\n\tState: %d\n\tPriority: %d\n\tHighwaterMark: %d\n\n",
+           system_state[i].xTaskNumber, system_state[i].pcTaskName,
+           system_state[i].eCurrentState, system_state[i].uxCurrentPriority,
+           system_state[i].usStackHighWaterMark);
+  }
+
+  vPortFree(system_state);
+  */
 }
