@@ -10,8 +10,6 @@ topicos a los que envio y recibo mqttpoint/mqttpoint_send.c mqttpoint/mqttpoint_
 
 app_main.h:sensor_msg
 
-cambiar printf() por ESP_LOG()
-
 cosas que estan hardcodeadas:
 <br>  -parte de app_main.c:mqtt_app_start:mqtt_cfg
 <br>  -parte de http/http_handler_post.c:point_post_handler:config
