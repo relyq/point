@@ -1,4 +1,3 @@
-
 #include <esp_http_client.h>
 
 #include "cJSON.h"
@@ -8,6 +7,8 @@
 #define MAX_HTTP_OUTPUT_BUFFER 2048
 
 static const char TAG[] = "point_http";
+// should be allocated dynamically. for now this works
+static char response_content[128];
 
 esp_err_t http_event_handler(esp_http_client_event_t* evt);
 
@@ -81,7 +82,9 @@ esp_err_t point_post_handler(httpd_req_t* req) {
       httpd_resp_set_hdr(req, "Cache-Control",
                          "no-store, no-cache, must-revalidate, max-age=0");
       httpd_resp_set_hdr(req, "Pragma", "no-cache");
-      httpd_resp_send(req, NULL, 0);
+      // response_content may be empty if the server sent no response
+      err = httpd_resp_send(req, response_content, HTTPD_RESP_USE_STRLEN);
+      ESP_LOGI(TAG, "HTTPD_RESP_SEND: %s", esp_err_to_name(err));
     } else {
       httpd_resp_set_status(req, "400 Bad Request");
       httpd_resp_send(req, NULL, 0);
@@ -136,6 +139,7 @@ esp_err_t http_event_handler(esp_http_client_event_t* evt) {
         output_len += evt->data_len;
       }
       ESP_LOGI(TAG, "HTTP_EVENT_ON_DATA, content=%s", (char*)evt->user_data);
+      strcpy(response_content, (char*)evt->user_data);
 
       break;
     case HTTP_EVENT_ON_FINISH:
