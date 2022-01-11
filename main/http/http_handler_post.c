@@ -4,7 +4,10 @@
 #include "esp_tls.h"
 #include "http_handlers.h"
 
-#define MAX_HTTP_OUTPUT_BUFFER 2048
+// this gets allocated inside httpd task: therefore
+// esp32-wifi-manager/src/http_app.c:385:
+// config.stack_size = 4096 + MAX_HTTP_OUTPUT_BUFFER;
+#define MAX_HTTP_OUTPUT_BUFFER 256
 
 static const char TAG[] = "point_http";
 // should be allocated dynamically. for now this works
@@ -74,6 +77,9 @@ esp_err_t point_post_handler(httpd_req_t* req) {
       } else {
         ESP_LOGE(TAG, "HTTP POST request failed: %s", esp_err_to_name(err));
       }
+
+      ESP_LOGI(TAG, "local_response_buffer_size = %d",
+               strlen(local_response_buffer));
 
       esp_http_client_cleanup(client);
 
