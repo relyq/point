@@ -9,7 +9,7 @@ gel("btnVincular").addEventListener(
         let codigoID = gel("codigoID").value;
 
         //El connect.json tambien se declara en c, ponele el nombre que mas te guste
-        fetch("/vincular.json", {
+        let test = fetch("/vincular.json", {
             method: "POST",
             //El X-Codigo-Id lo tenes que declarar en C
             headers: {
@@ -19,6 +19,10 @@ gel("btnVincular").addEventListener(
 
             body: { timestamp: Date.now() },
         });
+        let msg = document.getElementsByClassName('message');
+        msg.style.display = 'block';
+        msg.textContent  = test['message'];
+        
     },
     false
 );
