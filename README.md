@@ -4,6 +4,8 @@ todo:
 
 OTA updates
 
+dejar solo wss funcionando
+
 arreglar app_main.c:mqtt_app_start:mqtt_cfg.cert_pem
 
 topicos a los que envio y recibo mqttpoint/mqttpoint_send.c mqttpoint/mqttpoint_receive.c
