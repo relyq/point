@@ -19,9 +19,8 @@ void DHT_task(void* pvParameter) {
       sprintf(DHT_1.MsgContent, "T%05.2fH%02.2f", temp, hum);
       xQueueSendToBack(xMQTTDHTQueue, &DHT_1, 0);
     } else {
-      ESP_LOGE(TAG, "could not read data from sensor\n");
+      ESP_LOGE(TAG, "could not read data from sensor");
     }
-
     vTaskDelay(2000 / portTICK_PERIOD_MS);
   }
 }
