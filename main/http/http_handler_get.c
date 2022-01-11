@@ -1,6 +1,6 @@
 #include "http_handlers.h"
 
-static const char TAG[] = "point_http";
+static const char* TAG = "HTTP_HANDLER_GET";
 
 esp_err_t point_get_handler(httpd_req_t* req) {
   ESP_LOGI(TAG, "GET %s", req->uri);

@@ -1,5 +1,7 @@
 #include "mqttpoint.h"
 
+static const char *TAG = "MQTTPOINT_SEND";
+
 void mqttpoint_send(esp_mqtt_client_handle_t client) {
   char *msgbuffer = NULL;
   char topic[128] = "test/";

@@ -1,6 +1,8 @@
 #include "driver/gpio.h"
 #include "mqttpoint.h"
 
+static const char *TAG = "MQTTPOINT_RECEIVE";
+
 void mqttpoint_receive(esp_mqtt_client_handle_t client,
                        esp_mqtt_event_handle_t event) {
   cJSON *json_cmd = cJSON_Parse(event->data);
@@ -12,7 +14,7 @@ void mqttpoint_receive(esp_mqtt_client_handle_t client,
     gpio_set_level(2, !gpio_get_level(2));
     strcpy(str_response_status, "0");
   } else {
-    printf("error: idmsg is not string or is null");
+    ESP_LOGE(TAG, "error: idmsg is not string or is null");
     strcpy(str_idmsg, "error");
   }
 

@@ -9,7 +9,7 @@
 // config.stack_size = 4096 + MAX_HTTP_OUTPUT_BUFFER;
 #define MAX_HTTP_OUTPUT_BUFFER 256
 
-static const char TAG[] = "point_http";
+static const char* TAG = "HTTP_HANDLER_POST";
 // should be allocated dynamically. for now this works
 static char response_content[128];
 
