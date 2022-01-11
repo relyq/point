@@ -1,6 +1,8 @@
 #include "sensors.h"
 
-void DHT_task(void *pvParameter) {
+static const char* TAG = "DHT1";
+
+void DHT_task(void* pvParameter) {
   vTaskDelay(5000 / portTICK_PERIOD_MS);
 
   static const dht_sensor_type_t sensor_type = DHT_TYPE_DHT11;
@@ -17,7 +19,7 @@ void DHT_task(void *pvParameter) {
       sprintf(DHT_1.MsgContent, "T%05.2fH%02.2f", temp, hum);
       xQueueSendToBack(xMQTTDHTQueue, &DHT_1, 0);
     } else {
-      printf("DHT_1: could not read data from sensor\n");
+      ESP_LOGE(TAG, "could not read data from sensor\n");
     }
 
     vTaskDelay(2000 / portTICK_PERIOD_MS);
