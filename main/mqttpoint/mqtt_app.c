@@ -17,7 +17,8 @@ void mqtt_app_start(void *pvParameter) {
   ESP_LOGI(TAG, "starting mqtt task");
 
   const esp_mqtt_client_config_t mqtt_cfg = {
-      .uri = CONFIG_BROKER_URI,
+      //.uri = CONFIG_BROKER_URI,
+      .uri = "wss://vps-1951290-x.dattaweb.com:9001",
       .username = "points",
       .password = "Fm7G7MtV",
       .keepalive = 60,
