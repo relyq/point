@@ -4,6 +4,8 @@ todo:
 
 OTA updates
 
+capaz deberia leer el mac de un macro get_mac_str()
+
 dejar solo wss funcionando
 
 arreglar app_main.c:mqtt_app_start:mqtt_cfg.cert_pem
