@@ -4,6 +4,8 @@ todo:
 
 OTA updates
 
+la task de mqtt no deberia empezar hasta que haya wifi
+
 capaz deberia leer el mac de un macro get_mac_str()
 
 dejar solo wss funcionando
