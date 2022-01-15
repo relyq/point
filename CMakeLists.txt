@@ -9,7 +9,7 @@ set(EXTRA_COMPONENT_DIRS $ENV{IDF_PATH}/examples/common_components/protocol_exam
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(mqtt_point)
 
-target_add_binary_data(mqtt_point.elf "main/mqtt_eclipse_org.pem" TEXT)
+target_add_binary_data(mqtt_point.elf "main/mqtt_broker.pem" TEXT)
 target_add_binary_data(mqtt_point.elf "main/http/vincular/vincular_index.html" TEXT)
 target_add_binary_data(mqtt_point.elf "main/http/vincular/postearjaja.js" TEXT)
 target_add_binary_data(mqtt_point.elf "main/http/vincular/vincular_style.css" TEXT)

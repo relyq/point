@@ -3,15 +3,15 @@
 static const char *TAG = "MQTT_APP";
 
 #if CONFIG_BROKER_CERTIFICATE_OVERRIDDEN == 1
-static const uint8_t mqtt_eclipse_org_pem_start[] =
+static const uint8_t mqtt_broker_pem_start[] =
     "-----BEGIN CERTIFICATE-----\n" CONFIG_BROKER_CERTIFICATE_OVERRIDE
     "\n-----END CERTIFICATE-----";
 #else
-extern const uint8_t mqtt_eclipse_org_pem_start[] asm(
-    "_binary_mqtt_eclipse_org_pem_start");
+extern const uint8_t mqtt_broker_pem_start[] asm(
+    "_binary_mqtt_broker_pem_start");
 #endif
 extern const uint8_t mqtt_eclipse_org_pem_end[] asm(
-    "_binary_mqtt_eclipse_org_pem_end");
+    "_binary_mqtt_broker_pem_end");
 
 void mqtt_app_start(void *pvParameter) {
   ESP_LOGI(TAG, "starting mqtt task");
@@ -22,7 +22,7 @@ void mqtt_app_start(void *pvParameter) {
       .username = "points",
       .password = "Fm7G7MtV",
       .keepalive = 60,
-      .cert_pem = (const char *)mqtt_eclipse_org_pem_start,
+      .cert_pem = (const char *)mqtt_broker_pem_start,
   };
 
   esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
