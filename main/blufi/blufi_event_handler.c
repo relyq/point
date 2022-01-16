@@ -151,6 +151,10 @@ void blufi_event_callback(esp_blufi_cb_event_t event,
                          param->custom_data.data_len);
       ESP_LOGI("Custom Data", "%.*s", (int)param->custom_data.data_len,
                param->custom_data.data);
+
+      // just echo the data for now
+      esp_blufi_send_custom_data(param->custom_data.data,
+                                 param->custom_data.data_len);
       break;
     case ESP_BLUFI_EVENT_RECV_USERNAME:
       /* Not handle currently */
