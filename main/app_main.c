@@ -14,12 +14,18 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/param.h>
 
+#include "blufi/point_blufi.h"
+#include "blufi_example.h"
 #include "cJSON.h"
 #include "driver/gpio.h"
 #include "esp32/rom/ets_sys.h"
+#include "esp_blufi.h"
+#include "esp_blufi_api.h"
+#include "esp_bt.h"
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_netif.h"
@@ -28,11 +34,10 @@
 #include "esp_tls.h"
 #include "esp_wifi.h"
 #include "freertos/FreeRTOS.h"
+#include "freertos/event_groups.h"
 #include "freertos/portmacro.h"
 #include "freertos/task.h"
 #include "hal/gpio_types.h"
-#include "http/http_handlers.h"
-#include "http_app.h"
 #include "lwip/dns.h"
 #include "lwip/netdb.h"
 #include "lwip/sockets.h"
@@ -42,11 +47,33 @@
 #include "protocol_examples_common.h"
 #include "sdkconfig.h"
 #include "sensors/sensors.h"
-#include "wifi_manager.h"
 
 static const char *TAG = "MQTT_POINT";
 
 QueueHandle_t xMQTTDHTQueue;
+
+// blufi
+
+/* FreeRTOS event group to signal when we are connected & ready to make a
+ * request */
+EventGroupHandle_t wifi_event_group;
+
+static void initialise_wifi(void) {
+  ESP_ERROR_CHECK(esp_netif_init());
+  wifi_event_group = xEventGroupCreate();
+  ESP_ERROR_CHECK(esp_event_loop_create_default());
+  esp_netif_t *sta_netif = esp_netif_create_default_wifi_sta();
+  assert(sta_netif);
+  ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID,
+                                             &wifi_event_handler, NULL));
+  ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP,
+                                             &ip_event_handler, NULL));
+
+  wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+  ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+  ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+  ESP_ERROR_CHECK(esp_wifi_start());
+}
 
 void app_main(void) {
   ESP_LOGI(TAG, "[APP] Startup..");
@@ -62,11 +89,56 @@ void app_main(void) {
   esp_log_level_set("TRANSPORT", ESP_LOG_VERBOSE);
   esp_log_level_set("OUTBOX", ESP_LOG_VERBOSE);
 
-  ESP_ERROR_CHECK(nvs_flash_init());
-  wifi_manager_start();
+  // blufi
+  esp_err_t ret;
 
-  http_app_set_handler_hook(HTTP_GET, &point_get_handler);
-  http_app_set_handler_hook(HTTP_POST, &point_post_handler);
+  esp_blufi_callbacks_t example_callbacks = {
+      .event_cb = blufi_event_callback,
+      .negotiate_data_handler = blufi_dh_negotiate_data_handler,
+      .encrypt_func = blufi_aes_encrypt,
+      .decrypt_func = blufi_aes_decrypt,
+      .checksum_func = blufi_crc_checksum,
+  };
+
+  // Initialize NVS
+  ret = nvs_flash_init();
+  if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
+      ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+    // NVS partition was truncated and needs to be erased
+    // Retry nvs_flash_init
+    ESP_ERROR_CHECK(nvs_flash_erase());
+    ret = nvs_flash_init();
+  }
+
+  ESP_ERROR_CHECK(ret);
+
+  initialise_wifi();
+
+  ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
+
+  esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
+  ret = esp_bt_controller_init(&bt_cfg);
+  if (ret) {
+    BLUFI_ERROR("%s initialize bt controller failed: %s\n", __func__,
+                esp_err_to_name(ret));
+  }
+
+  ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
+  if (ret) {
+    BLUFI_ERROR("%s enable bt controller failed: %s\n", __func__,
+                esp_err_to_name(ret));
+    return;
+  }
+
+  ret = esp_blufi_host_and_cb_init(&example_callbacks);
+  if (ret) {
+    BLUFI_ERROR("%s initialise failed: %s\n", __func__, esp_err_to_name(ret));
+    return;
+  }
+
+  BLUFI_INFO("BLUFI VERSION %04x\n", esp_blufi_get_version());
+
+  // blufi end
 
   gpio_set_direction(2, GPIO_MODE_INPUT_OUTPUT);
 
