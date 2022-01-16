@@ -149,6 +149,8 @@ void blufi_event_callback(esp_blufi_cb_event_t event,
       BLUFI_INFO("Recv Custom Data %d\n", param->custom_data.data_len);
       esp_log_buffer_hex("Custom Data", param->custom_data.data,
                          param->custom_data.data_len);
+      ESP_LOGI("Custom Data", "%.*s", (int)param->custom_data.data_len,
+               param->custom_data.data);
       break;
     case ESP_BLUFI_EVENT_RECV_USERNAME:
       /* Not handle currently */
