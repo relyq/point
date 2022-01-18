@@ -70,10 +70,6 @@ void app_main(void) {
   esp_log_level_set("TRANSPORT", ESP_LOG_VERBOSE);
   esp_log_level_set("OUTBOX", ESP_LOG_VERBOSE);
 
-  gpio_set_direction(2, GPIO_MODE_INPUT_OUTPUT);
-
-  xMQTTDHTQueue = xQueueCreate(3, sizeof(struct sensor_msg));
-
   /* Initialize NVS partition */
   esp_err_t ret = nvs_flash_init();
   if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
@@ -229,6 +225,10 @@ void app_main(void) {
                       portMAX_DELAY);
 
   /* Start main application now */
+
+  gpio_set_direction(2, GPIO_MODE_INPUT_OUTPUT);
+
+  xMQTTDHTQueue = xQueueCreate(3, sizeof(struct sensor_msg));
 
   xTaskCreate(&DHT_task, "DHT_task", 2048, NULL, 5, NULL);
   // xTaskCreate(&DHT_test0, "DHT_test0", 2048, NULL, 5, NULL);

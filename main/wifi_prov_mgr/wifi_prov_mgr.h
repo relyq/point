@@ -1,5 +1,5 @@
-#ifndef WIFI_PROV_MGR_H
-#define WIFI_PROV_MGR_H
+#ifndef __WIFI_PROV_MGR_H__
+#define __WIFI_PROV_MGR_H__
 
 #include <esp_err.h>
 #include <esp_event.h>
@@ -18,4 +18,4 @@ esp_err_t custom_prov_data_handler(uint32_t session_id, const uint8_t *inbuf,
                                    ssize_t inlen, uint8_t **outbuf,
                                    ssize_t *outlen, void *priv_data);
 
-#endif  // WIFI_PROV_MGR_H
+#endif  // __WIFI_PROV_MGR_H__
