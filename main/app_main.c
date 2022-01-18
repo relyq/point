@@ -89,8 +89,7 @@ void app_main(void) {
   esp_log_level_set("TRANSPORT", ESP_LOG_VERBOSE);
   esp_log_level_set("OUTBOX", ESP_LOG_VERBOSE);
 
-  // blufi
-  esp_err_t ret;
+  esp_err_t err;
 
   esp_blufi_callbacks_t example_callbacks = {
       .event_cb = blufi_event_callback,
@@ -101,44 +100,47 @@ void app_main(void) {
   };
 
   // Initialize NVS
-  ret = nvs_flash_init();
-  if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
-      ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+  err = nvs_flash_init();
+  if (err == ESP_ERR_NVS_NO_FREE_PAGES ||
+      err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
     // NVS partition was truncated and needs to be erased
     // Retry nvs_flash_init
     ESP_ERROR_CHECK(nvs_flash_erase());
-    ret = nvs_flash_init();
+    err = nvs_flash_init();
   }
 
-  ESP_ERROR_CHECK(ret);
+  ESP_ERROR_CHECK(err);
 
   initialise_wifi();
 
   ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
 
   esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-  ret = esp_bt_controller_init(&bt_cfg);
-  if (ret) {
+  err = esp_bt_controller_init(&bt_cfg);
+  if (err) {
     BLUFI_ERROR("%s initialize bt controller failed: %s\n", __func__,
-                esp_err_to_name(ret));
+                esp_err_to_name(err));
   }
 
-  ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
-  if (ret) {
+  err = esp_bt_controller_enable(ESP_BT_MODE_BLE);
+  if (err) {
     BLUFI_ERROR("%s enable bt controller failed: %s\n", __func__,
-                esp_err_to_name(ret));
+                esp_err_to_name(err));
     return;
   }
 
-  ret = esp_blufi_host_and_cb_init(&example_callbacks);
-  if (ret) {
-    BLUFI_ERROR("%s initialise failed: %s\n", __func__, esp_err_to_name(ret));
+  err = esp_blufi_host_and_cb_init(&example_callbacks);
+  if (err) {
+    BLUFI_ERROR("%s initialise failed: %s\n", __func__, esp_err_to_name(err));
     return;
+  }
+
+  err = blufi_security_init();
+  if (err) {
+    ESP_LOGE(TAG, "BLUFI_SECURITY_INIT error");
   }
 
   BLUFI_INFO("BLUFI VERSION %04x\n", esp_blufi_get_version());
-
-  // blufi end
 
   gpio_set_direction(2, GPIO_MODE_INPUT_OUTPUT);
 
