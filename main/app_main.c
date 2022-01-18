@@ -18,14 +18,9 @@
 #include <string.h>
 #include <sys/param.h>
 
-#include "blufi/point_blufi.h"
-#include "blufi_example.h"
 #include "cJSON.h"
 #include "driver/gpio.h"
 #include "esp32/rom/ets_sys.h"
-#include "esp_blufi.h"
-#include "esp_blufi_api.h"
-#include "esp_bt.h"
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_netif.h"
@@ -47,33 +42,19 @@
 #include "protocol_examples_common.h"
 #include "sdkconfig.h"
 #include "sensors/sensors.h"
+#include "wifi_prov_mgr/wifi_prov_mgr.h"
+#include "wifi_provisioning/manager.h"
+#include "wifi_provisioning/scheme_ble.h"
 
 static const char *TAG = "MQTT_POINT";
 
-QueueHandle_t xMQTTDHTQueue;
-
-// blufi
-
-/* FreeRTOS event group to signal when we are connected & ready to make a
- * request */
+/* Signal Wi-Fi events on this event-group */
+const int WIFI_CONNECTED_EVENT = BIT0;
 EventGroupHandle_t wifi_event_group;
 
-static void initialise_wifi(void) {
-  ESP_ERROR_CHECK(esp_netif_init());
-  wifi_event_group = xEventGroupCreate();
-  ESP_ERROR_CHECK(esp_event_loop_create_default());
-  esp_netif_t *sta_netif = esp_netif_create_default_wifi_sta();
-  assert(sta_netif);
-  ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID,
-                                             &wifi_event_handler, NULL));
-  ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP,
-                                             &ip_event_handler, NULL));
+#define PROV_TRANSPORT_BLE "ble"
 
-  wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-  ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-  ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-  ESP_ERROR_CHECK(esp_wifi_start());
-}
+QueueHandle_t xMQTTDHTQueue;
 
 void app_main(void) {
   ESP_LOGI(TAG, "[APP] Startup..");
@@ -89,62 +70,165 @@ void app_main(void) {
   esp_log_level_set("TRANSPORT", ESP_LOG_VERBOSE);
   esp_log_level_set("OUTBOX", ESP_LOG_VERBOSE);
 
-  esp_err_t err;
-
-  esp_blufi_callbacks_t example_callbacks = {
-      .event_cb = blufi_event_callback,
-      .negotiate_data_handler = blufi_dh_negotiate_data_handler,
-      .encrypt_func = blufi_aes_encrypt,
-      .decrypt_func = blufi_aes_decrypt,
-      .checksum_func = blufi_crc_checksum,
-  };
-
-  // Initialize NVS
-  err = nvs_flash_init();
-  if (err == ESP_ERR_NVS_NO_FREE_PAGES ||
-      err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-    // NVS partition was truncated and needs to be erased
-    // Retry nvs_flash_init
-    ESP_ERROR_CHECK(nvs_flash_erase());
-    err = nvs_flash_init();
-  }
-
-  ESP_ERROR_CHECK(err);
-
-  initialise_wifi();
-
-  ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
-
-  esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-  err = esp_bt_controller_init(&bt_cfg);
-  if (err) {
-    BLUFI_ERROR("%s initialize bt controller failed: %s\n", __func__,
-                esp_err_to_name(err));
-  }
-
-  err = esp_bt_controller_enable(ESP_BT_MODE_BLE);
-  if (err) {
-    BLUFI_ERROR("%s enable bt controller failed: %s\n", __func__,
-                esp_err_to_name(err));
-    return;
-  }
-
-  err = esp_blufi_host_and_cb_init(&example_callbacks);
-  if (err) {
-    BLUFI_ERROR("%s initialise failed: %s\n", __func__, esp_err_to_name(err));
-    return;
-  }
-
-  err = blufi_security_init();
-  if (err) {
-    ESP_LOGE(TAG, "BLUFI_SECURITY_INIT error");
-  }
-
-  BLUFI_INFO("BLUFI VERSION %04x\n", esp_blufi_get_version());
-
   gpio_set_direction(2, GPIO_MODE_INPUT_OUTPUT);
 
   xMQTTDHTQueue = xQueueCreate(3, sizeof(struct sensor_msg));
+
+  /* Initialize NVS partition */
+  esp_err_t ret = nvs_flash_init();
+  if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
+      ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+    /* NVS partition was truncated
+     * and needs to be erased */
+    ESP_ERROR_CHECK(nvs_flash_erase());
+
+    /* Retry nvs_flash_init */
+    ESP_ERROR_CHECK(nvs_flash_init());
+  }
+
+  /* Initialize TCP/IP */
+  ESP_ERROR_CHECK(esp_netif_init());
+
+  /* Initialize the event loop */
+  ESP_ERROR_CHECK(esp_event_loop_create_default());
+  wifi_event_group = xEventGroupCreate();
+
+  /* Register our event handler for Wi-Fi, IP and Provisioning related events
+   */
+  ESP_ERROR_CHECK(esp_event_handler_register(WIFI_PROV_EVENT, ESP_EVENT_ANY_ID,
+                                             &event_handler, NULL));
+  ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID,
+                                             &event_handler, NULL));
+  ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP,
+                                             &event_handler, NULL));
+
+  /* Initialize Wi-Fi including netif with default config */
+  esp_netif_create_default_wifi_sta();
+
+  wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+  ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+
+  /* Configuration for the provisioning manager */
+  wifi_prov_mgr_config_t config = {
+      /* What is the Provisioning Scheme that we want ?
+       * wifi_prov_scheme_softap or wifi_prov_scheme_ble */
+      .scheme = wifi_prov_scheme_ble,
+
+      /* Any default scheme specific event handler that you would
+       * like to choose. Since our example application requires
+       * neither BT nor BLE, we can choose to release the associated
+       * memory once provisioning is complete, or not needed
+       * (in case when device is already provisioned). Choosing
+       * appropriate scheme specific event handler allows the manager
+       * to take care of this automatically. This can be set to
+       * WIFI_PROV_EVENT_HANDLER_NONE when using wifi_prov_scheme_softap*/
+      .scheme_event_handler = WIFI_PROV_SCHEME_BLE_EVENT_HANDLER_FREE_BTDM,
+  };
+
+  /* Initialize provisioning manager with the
+   * configuration parameters set above */
+  ESP_ERROR_CHECK(wifi_prov_mgr_init(config));
+
+  bool provisioned = false;
+  /* Let's find out if the device is provisioned */
+  ESP_ERROR_CHECK(wifi_prov_mgr_is_provisioned(&provisioned));
+
+  /* If device is not yet provisioned start provisioning service */
+  if (!provisioned) {
+    ESP_LOGI(TAG, "Starting provisioning");
+
+    /* What is the Device Service Name that we want
+     * This translates to :
+     *     - Wi-Fi SSID when scheme is wifi_prov_scheme_softap
+     *     - device name when scheme is wifi_prov_scheme_ble
+     */
+    char service_name[12];
+    get_device_service_name(service_name, sizeof(service_name));
+
+    /* What is the security level that we want (0 or 1):
+     *      - WIFI_PROV_SECURITY_0 is simply plain text communication.
+     *      - WIFI_PROV_SECURITY_1 is secure communication which consists of
+     * secure handshake using X25519 key exchange and proof of possession
+     * (pop) and AES-CTR for encryption/decryption of messages.
+     */
+    wifi_prov_security_t security = WIFI_PROV_SECURITY_1;
+
+    /* Do we want a proof-of-possession (ignored if Security 0 is selected):
+     *      - this should be a string with length > 0
+     *      - NULL if not used
+     */
+    const char *pop = "abcd1234";
+
+    /* What is the service key (could be NULL)
+     * This translates to :
+     *     - Wi-Fi password when scheme is wifi_prov_scheme_softap
+     *     - simply ignored when scheme is wifi_prov_scheme_ble
+     */
+    const char *service_key = NULL;
+
+    /* This step is only useful when scheme is wifi_prov_scheme_ble. This will
+     * set a custom 128 bit UUID which will be included in the BLE
+     * advertisement and will correspond to the primary GATT service that
+     * provides provisioning endpoints as GATT characteristics. Each GATT
+     * characteristic will be formed using the primary service UUID as base,
+     * with different auto assigned 12th and 13th bytes (assume counting
+     * starts from 0th byte). The client side applications must identify the
+     * endpoints by reading the User Characteristic Description descriptor
+     * (0x2901) for each characteristic, which contains the endpoint name of
+     * the characteristic */
+    uint8_t custom_service_uuid[] = {
+        /* LSB <---------------------------------------
+         * ---------------------------------------> MSB */
+        0xb4, 0xdf, 0x5a, 0x1c, 0x3f, 0x6b, 0xf4, 0xbf,
+        0xea, 0x4a, 0x82, 0x03, 0x04, 0x90, 0x1a, 0x02,
+    };
+    wifi_prov_scheme_ble_set_service_uuid(custom_service_uuid);
+
+    /* An optional endpoint that applications can create if they expect to
+     * get some additional custom data during provisioning workflow.
+     * The endpoint name can be anything of your choice.
+     * This call must be made before starting the provisioning.
+     */
+    wifi_prov_mgr_endpoint_create("custom-data");
+
+    // disable auto stop to config the device
+    wifi_prov_mgr_disable_auto_stop(1000);
+
+    /* Start provisioning service */
+    ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(
+        security, pop, service_name, service_key));
+
+    /* The handler for the optional endpoint created above.
+     * This call must be made after starting the provisioning, and only if the
+     * endpoint has already been created above.
+     */
+    wifi_prov_mgr_endpoint_register("custom-data", custom_prov_data_handler,
+                                    NULL);
+
+    /* Uncomment the following to wait for the provisioning to finish and then
+     * release the resources of the manager. Since in this case
+     * de-initialization is triggered by the default event loop handler, we
+     * don't need to call the following */
+    // wifi_prov_mgr_wait();
+    // wifi_prov_mgr_deinit();
+    /* Print QR code for provisioning */
+    wifi_prov_print_qr(service_name, pop, PROV_TRANSPORT_BLE);
+  } else {
+    ESP_LOGI(TAG, "Already provisioned, starting Wi-Fi STA");
+
+    /* We don't need the manager as device is already provisioned,
+     * so let's release it's resources */
+    wifi_prov_mgr_deinit();
+
+    /* Start Wi-Fi station */
+    wifi_init_sta();
+  }
+
+  /* Wait for Wi-Fi connection */
+  xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_EVENT, false, true,
+                      portMAX_DELAY);
+
+  /* Start main application now */
 
   xTaskCreate(&DHT_task, "DHT_task", 2048, NULL, 5, NULL);
   // xTaskCreate(&DHT_test0, "DHT_test0", 2048, NULL, 5, NULL);
