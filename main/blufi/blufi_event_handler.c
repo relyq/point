@@ -8,31 +8,36 @@ void blufi_event_callback(esp_blufi_cb_event_t event,
   /* actually, should post to blufi_task handle the procedure,
    * now, as a example, we do it more simply */
   switch (event) {
-    case ESP_BLUFI_EVENT_INIT_FINISH:
+    case ESP_BLUFI_EVENT_INIT_FINISH: {
       BLUFI_INFO("BLUFI init finish\n");
 
       esp_blufi_adv_start();
       break;
-    case ESP_BLUFI_EVENT_DEINIT_FINISH:
+    }
+    case ESP_BLUFI_EVENT_DEINIT_FINISH: {
       BLUFI_INFO("BLUFI deinit finish\n");
       break;
-    case ESP_BLUFI_EVENT_BLE_CONNECT:
+    }
+    case ESP_BLUFI_EVENT_BLE_CONNECT: {
       BLUFI_INFO("BLUFI ble connect\n");
       ble_is_connected = true;
       esp_blufi_adv_stop();
       blufi_security_init();
       break;
-    case ESP_BLUFI_EVENT_BLE_DISCONNECT:
+    }
+    case ESP_BLUFI_EVENT_BLE_DISCONNECT: {
       BLUFI_INFO("BLUFI ble disconnect\n");
       ble_is_connected = false;
       blufi_security_deinit();
       esp_blufi_adv_start();
       break;
-    case ESP_BLUFI_EVENT_SET_WIFI_OPMODE:
+    }
+    case ESP_BLUFI_EVENT_SET_WIFI_OPMODE: {
       BLUFI_INFO("BLUFI Set WIFI opmode %d\n", param->wifi_mode.op_mode);
       ESP_ERROR_CHECK(esp_wifi_set_mode(param->wifi_mode.op_mode));
       break;
-    case ESP_BLUFI_EVENT_REQ_CONNECT_TO_AP:
+    }
+    case ESP_BLUFI_EVENT_REQ_CONNECT_TO_AP: {
       BLUFI_INFO("BLUFI requset wifi connect to AP\n");
       /* there is no wifi callback when the device has already connected to this
       wifi so disconnect wifi before connection.
@@ -40,15 +45,18 @@ void blufi_event_callback(esp_blufi_cb_event_t event,
       esp_wifi_disconnect();
       esp_wifi_connect();
       break;
-    case ESP_BLUFI_EVENT_REQ_DISCONNECT_FROM_AP:
+    }
+    case ESP_BLUFI_EVENT_REQ_DISCONNECT_FROM_AP: {
       BLUFI_INFO("BLUFI requset wifi disconnect from AP\n");
       esp_wifi_disconnect();
       break;
-    case ESP_BLUFI_EVENT_REPORT_ERROR:
+    }
+    case ESP_BLUFI_EVENT_REPORT_ERROR: {
       BLUFI_ERROR("BLUFI report error, error code %d\n",
                   param->report_error.state);
       esp_blufi_send_error_info(param->report_error.state);
       break;
+    }
     case ESP_BLUFI_EVENT_GET_WIFI_STATUS: {
       wifi_mode_t mode;
       esp_blufi_extra_info_t info;
@@ -70,34 +78,39 @@ void blufi_event_callback(esp_blufi_cb_event_t event,
 
       break;
     }
-    case ESP_BLUFI_EVENT_RECV_SLAVE_DISCONNECT_BLE:
+    case ESP_BLUFI_EVENT_RECV_SLAVE_DISCONNECT_BLE: {
       BLUFI_INFO("blufi close a gatt connection");
       esp_blufi_disconnect();
       break;
-    case ESP_BLUFI_EVENT_DEAUTHENTICATE_STA:
+    }
+    case ESP_BLUFI_EVENT_DEAUTHENTICATE_STA: {
       /* TODO */
       break;
-    case ESP_BLUFI_EVENT_RECV_STA_BSSID:
+    }
+    case ESP_BLUFI_EVENT_RECV_STA_BSSID: {
       memcpy(sta_config.sta.bssid, param->sta_bssid.bssid, 6);
       sta_config.sta.bssid_set = 1;
       esp_wifi_set_config(WIFI_IF_STA, &sta_config);
       BLUFI_INFO("Recv STA BSSID %s\n", sta_config.sta.ssid);
       break;
-    case ESP_BLUFI_EVENT_RECV_STA_SSID:
+    }
+    case ESP_BLUFI_EVENT_RECV_STA_SSID: {
       strncpy((char *)sta_config.sta.ssid, (char *)param->sta_ssid.ssid,
               param->sta_ssid.ssid_len);
       sta_config.sta.ssid[param->sta_ssid.ssid_len] = '\0';
       esp_wifi_set_config(WIFI_IF_STA, &sta_config);
       BLUFI_INFO("Recv STA SSID %s\n", sta_config.sta.ssid);
       break;
-    case ESP_BLUFI_EVENT_RECV_STA_PASSWD:
+    }
+    case ESP_BLUFI_EVENT_RECV_STA_PASSWD: {
       strncpy((char *)sta_config.sta.password, (char *)param->sta_passwd.passwd,
               param->sta_passwd.passwd_len);
       sta_config.sta.password[param->sta_passwd.passwd_len] = '\0';
       esp_wifi_set_config(WIFI_IF_STA, &sta_config);
       BLUFI_INFO("Recv STA PASSWORD %s\n", sta_config.sta.password);
       break;
-    case ESP_BLUFI_EVENT_RECV_SOFTAP_SSID:
+    }
+    case ESP_BLUFI_EVENT_RECV_SOFTAP_SSID: {
       strncpy((char *)ap_config.ap.ssid, (char *)param->softap_ssid.ssid,
               param->softap_ssid.ssid_len);
       ap_config.ap.ssid[param->softap_ssid.ssid_len] = '\0';
@@ -106,7 +119,8 @@ void blufi_event_callback(esp_blufi_cb_event_t event,
       BLUFI_INFO("Recv SOFTAP SSID %s, ssid len %d\n", ap_config.ap.ssid,
                  ap_config.ap.ssid_len);
       break;
-    case ESP_BLUFI_EVENT_RECV_SOFTAP_PASSWD:
+    }
+    case ESP_BLUFI_EVENT_RECV_SOFTAP_PASSWD: {
       strncpy((char *)ap_config.ap.password,
               (char *)param->softap_passwd.passwd,
               param->softap_passwd.passwd_len);
@@ -115,7 +129,8 @@ void blufi_event_callback(esp_blufi_cb_event_t event,
       BLUFI_INFO("Recv SOFTAP PASSWORD %s len = %d\n", ap_config.ap.password,
                  param->softap_passwd.passwd_len);
       break;
-    case ESP_BLUFI_EVENT_RECV_SOFTAP_MAX_CONN_NUM:
+    }
+    case ESP_BLUFI_EVENT_RECV_SOFTAP_MAX_CONN_NUM: {
       if (param->softap_max_conn_num.max_conn_num > 4) {
         return;
       }
@@ -123,7 +138,8 @@ void blufi_event_callback(esp_blufi_cb_event_t event,
       esp_wifi_set_config(WIFI_IF_AP, &ap_config);
       BLUFI_INFO("Recv SOFTAP MAX CONN NUM %d\n", ap_config.ap.max_connection);
       break;
-    case ESP_BLUFI_EVENT_RECV_SOFTAP_AUTH_MODE:
+    }
+    case ESP_BLUFI_EVENT_RECV_SOFTAP_AUTH_MODE: {
       if (param->softap_auth_mode.auth_mode >= WIFI_AUTH_MAX) {
         return;
       }
@@ -131,7 +147,8 @@ void blufi_event_callback(esp_blufi_cb_event_t event,
       esp_wifi_set_config(WIFI_IF_AP, &ap_config);
       BLUFI_INFO("Recv SOFTAP AUTH MODE %d\n", ap_config.ap.authmode);
       break;
-    case ESP_BLUFI_EVENT_RECV_SOFTAP_CHANNEL:
+    }
+    case ESP_BLUFI_EVENT_RECV_SOFTAP_CHANNEL: {
       if (param->softap_channel.channel > 13) {
         return;
       }
@@ -139,13 +156,14 @@ void blufi_event_callback(esp_blufi_cb_event_t event,
       esp_wifi_set_config(WIFI_IF_AP, &ap_config);
       BLUFI_INFO("Recv SOFTAP CHANNEL %d\n", ap_config.ap.channel);
       break;
+    }
     case ESP_BLUFI_EVENT_GET_WIFI_LIST: {
       wifi_scan_config_t scanConf = {
           .ssid = NULL, .bssid = NULL, .channel = 0, .show_hidden = false};
       esp_wifi_scan_start(&scanConf, true);
       break;
     }
-    case ESP_BLUFI_EVENT_RECV_CUSTOM_DATA:
+    case ESP_BLUFI_EVENT_RECV_CUSTOM_DATA: {
       BLUFI_INFO("Recv Custom Data %d\n", param->custom_data.data_len);
       esp_log_buffer_hex("Custom Data", param->custom_data.data,
                          param->custom_data.data_len);
@@ -156,26 +174,33 @@ void blufi_event_callback(esp_blufi_cb_event_t event,
       esp_blufi_send_custom_data(param->custom_data.data,
                                  param->custom_data.data_len);
       break;
-    case ESP_BLUFI_EVENT_RECV_USERNAME:
+    }
+    case ESP_BLUFI_EVENT_RECV_USERNAME: {
       /* Not handle currently */
       break;
-    case ESP_BLUFI_EVENT_RECV_CA_CERT:
+    }
+    case ESP_BLUFI_EVENT_RECV_CA_CERT: {
       /* Not handle currently */
       break;
-    case ESP_BLUFI_EVENT_RECV_CLIENT_CERT:
+    }
+    case ESP_BLUFI_EVENT_RECV_CLIENT_CERT: {
       /* Not handle currently */
       break;
-    case ESP_BLUFI_EVENT_RECV_SERVER_CERT:
+    }
+    case ESP_BLUFI_EVENT_RECV_SERVER_CERT: {
       /* Not handle currently */
       break;
-    case ESP_BLUFI_EVENT_RECV_CLIENT_PRIV_KEY:
+    }
+    case ESP_BLUFI_EVENT_RECV_CLIENT_PRIV_KEY: {
       /* Not handle currently */
       break;
-      ;
-    case ESP_BLUFI_EVENT_RECV_SERVER_PRIV_KEY:
+    }
+    case ESP_BLUFI_EVENT_RECV_SERVER_PRIV_KEY: {
       /* Not handle currently */
       break;
-    default:
+    }
+    default: {
       break;
+    }
   }
 }

@@ -6,17 +6,19 @@ void wifi_event_handler(void *arg, esp_event_base_t event_base,
   wifi_mode_t mode;
 
   switch (event_id) {
-    case WIFI_EVENT_STA_START:
+    case WIFI_EVENT_STA_START: {
       esp_wifi_connect();
       break;
-    case WIFI_EVENT_STA_CONNECTED:
+    }
+    case WIFI_EVENT_STA_CONNECTED: {
       gl_sta_connected = true;
       event = (wifi_event_sta_connected_t *)event_data;
       memcpy(gl_sta_bssid, event->bssid, 6);
       memcpy(gl_sta_ssid, event->ssid, event->ssid_len);
       gl_sta_ssid_len = event->ssid_len;
       break;
-    case WIFI_EVENT_STA_DISCONNECTED:
+    }
+    case WIFI_EVENT_STA_DISCONNECTED: {
       /* This is a workaround as ESP32 WiFi libs don't currently
          auto-reassociate. */
       gl_sta_connected = false;
@@ -26,7 +28,8 @@ void wifi_event_handler(void *arg, esp_event_base_t event_base,
       esp_wifi_connect();
       xEventGroupClearBits(wifi_event_group, CONNECTED_BIT);
       break;
-    case WIFI_EVENT_AP_START:
+    }
+    case WIFI_EVENT_AP_START: {
       esp_wifi_get_mode(&mode);
 
       /* TODO: get config or information of softap, then set to report
@@ -43,6 +46,7 @@ void wifi_event_handler(void *arg, esp_event_base_t event_base,
         BLUFI_INFO("BLUFI BLE is not connected yet\n");
       }
       break;
+    }
     case WIFI_EVENT_SCAN_DONE: {
       uint16_t apCount = 0;
       esp_wifi_scan_get_ap_num(&apCount);
