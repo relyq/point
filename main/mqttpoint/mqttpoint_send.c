@@ -6,6 +6,7 @@ void mqttpoint_send(esp_mqtt_client_handle_t client) {
   char *msgbuffer = NULL;
   char topic[128] = "test/";
   struct sensor_msg MQTT_MSG;
+  esp_err_t err;
 
   extern QueueHandle_t xMQTTDHTQueue;
 
@@ -21,5 +22,9 @@ void mqttpoint_send(esp_mqtt_client_handle_t client) {
   cJSON_Delete(mqtt_infomsg);
 
   strcat(topic, MQTT_MSG.IdDevice);
-  esp_mqtt_client_publish(client, topic, msgbuffer, 0, 1, 0);
+  err = esp_mqtt_client_publish(client, topic, msgbuffer, 0, 1, 0);
+
+  if (err) {
+    ESP_LOGE(TAG, "esp_mqtt_client_publish error");
+  }
 }
