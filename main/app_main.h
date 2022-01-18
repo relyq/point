@@ -3,7 +3,7 @@
 
 struct sensor_msg {
   char DeviceClass[5];
-  char IdDevice[9];
+  char IdDevice[13];  // device mac address
   char MsgType[5];
   char MsgContent[64];
 };
