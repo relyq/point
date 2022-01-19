@@ -2,8 +2,6 @@
 
 todo:
 
-OTA updates
-
 textfiles embebidos en CMakeLists.txt y main/CMakeLists.txt
 
 topicos a los que envio y recibo mqttpoint/mqttpoint_send.c mqttpoint/mqttpoint_receive.c
