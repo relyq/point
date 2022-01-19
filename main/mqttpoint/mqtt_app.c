@@ -30,6 +30,8 @@ void mqtt_app_start(void *pvParameter) {
                                  client);
   esp_mqtt_client_start(client);
 
+  esp_mqtt_client_subscribe(client, "test/f008d1d4faf0/update", 2);
+
   while (1) {
     mqttpoint_send(client);
     vTaskDelay(5000 / portTICK_PERIOD_MS);

@@ -9,4 +9,5 @@ idf_component_register(SRCS "app_main.c"
                             "sensors/DHT_test1.c"
                             "wifi_prov_mgr/wifi_prov_mgr.c"
                             "wifi_prov_mgr/custom_data_handler.c"
+                            "ota/http_ota.c"
                     INCLUDE_DIRS ".")

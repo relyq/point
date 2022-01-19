@@ -6,6 +6,8 @@ OTA updates
 
 topicos a los que envio y recibo mqttpoint/mqttpoint_send.c mqttpoint/mqttpoint_receive.c
 
+mqttpoint/mqtt_event_handler.c:12
+
 app_main.h:sensor_msg
 
 cosas que estan hardcodeadas:
@@ -15,3 +17,4 @@ cosas que estan hardcodeadas:
 <br>  -sensors/DHT_task.c:sensor_msg
 <br>  -app_main.c:172 mqttpoint/mqttpoint_receive.c:12 pin de gpio
 <br>  -mqttpoint/mqttpoint_send.c tipo de mensaje
+<br>  -ota/http_ota.c:28 url de update

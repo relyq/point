@@ -32,7 +32,9 @@
 #include "hal/gpio_types.h"
 #include "mqtt_client.h"
 #include "mqttpoint/mqttpoint.h"
+#include "nvs.h"
 #include "nvs_flash.h"
+#include "ota/http_ota.h"
 #include "sdkconfig.h"
 #include "sensors/sensors.h"
 #include "wifi_prov_mgr/wifi_prov_mgr.h"
@@ -74,6 +76,8 @@ void app_main(void) {
     /* Retry nvs_flash_init */
     ESP_ERROR_CHECK(nvs_flash_init());
   }
+
+  get_sha256_of_partitions();
 
   /* Initialize TCP/IP */
   ESP_ERROR_CHECK(esp_netif_init());
@@ -218,6 +222,63 @@ void app_main(void) {
                       portMAX_DELAY);
 
   /* Start main application now */
+
+  // ota
+  // using a single ota partition,
+  // therefore we need to reboot to factory before updating.
+  // when a new update is available a flag is written to nvs so the
+  // update-available state is remembered after rebooting
+  print_running_partition();
+
+  gpio_set_direction(GPIO_NUM_0, GPIO_MODE_INPUT);
+  gpio_set_pull_mode(GPIO_NUM_0, GPIO_PULLUP_ONLY);
+
+  bool update_available = 0;
+
+  nvs_handle_t nvs_handle;
+
+  // write update flag to nvs
+  bool gpio_update = !gpio_get_level(GPIO_NUM_0);
+  err = nvs_open("update", NVS_READWRITE, &nvs_handle);
+
+  if (err != ESP_OK) {
+    ESP_LOGE(TAG, "error (%s) opening NVS handle", esp_err_to_name(err));
+  } else {
+    err = nvs_set_u8(nvs_handle, "update_flag", gpio_update);
+
+    if (err != ESP_OK) {
+      ESP_LOGE(TAG, "error (%s) writing value to nvs", esp_err_to_name(err));
+    }
+
+    err = nvs_commit(nvs_handle);
+
+    if (err != ESP_OK) {
+      ESP_LOGE(TAG, "error (%s) committing to nvs", esp_err_to_name(err));
+    }
+
+    nvs_close(nvs_handle);
+  }
+
+  // read update flag from nvs
+  // nvs_handle_t nvs_handle;
+  err = nvs_open("update", NVS_READONLY, &nvs_handle);
+
+  if (err != ESP_OK) {
+    ESP_LOGE(TAG, "error (%s) opening NVS handle", esp_err_to_name(err));
+  } else {
+    err = nvs_get_u8(nvs_handle, "update_flag", &update_available);
+
+    if (err != ESP_OK) {
+      ESP_LOGE(TAG, "error (%s) reading value from nvs", esp_err_to_name(err));
+    }
+
+    nvs_close(nvs_handle);
+  }
+
+  if (update_available) {
+    ESP_LOGI(TAG, "update available; performing ota");
+    perform_ota_update();
+  }
 
   gpio_set_direction(2, GPIO_MODE_INPUT_OUTPUT);
 
