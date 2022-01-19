@@ -15,10 +15,11 @@ void mqttpoint_receive(esp_mqtt_client_handle_t client,
     gpio_set_level(2, !gpio_get_level(2));
     strcpy(str_response_status, "0");
   } else {
-    ESP_LOGE(TAG, "idmsg is not string or is null");
+    ESP_LOGE(TAG, "IdMsg is not string or is null");
     strcpy(str_idmsg, "error");
   }
 
+  /* esto me crashea el dispositivo. de todas formas tengo que cambiarlo
   char *str_response_led;
   cJSON *json_led = cJSON_CreateObject();
   cJSON_AddStringToObject(json_led, "IdMsg", str_idmsg);
@@ -40,4 +41,5 @@ void mqttpoint_receive(esp_mqtt_client_handle_t client,
          pch + strlen("cmd/"));
 
   esp_mqtt_client_publish(client, response_topic, str_response_led, 0, 1, 0);
+  */
 }

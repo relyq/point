@@ -25,6 +25,6 @@ void mqttpoint_send(esp_mqtt_client_handle_t client) {
   err = esp_mqtt_client_publish(client, topic, msgbuffer, 0, 1, 0);
 
   if (err) {
-    ESP_LOGE(TAG, "esp_mqtt_client_publish error");
+    // ESP_LOGE(TAG, "esp_mqtt_client_publish error");
   }
 }
