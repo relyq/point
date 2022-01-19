@@ -8,6 +8,8 @@ topicos a los que envio y recibo mqttpoint/mqttpoint_send.c mqttpoint/mqttpoint_
 
 app_main.h:sensor_msg
 
+mqttpoint/mqttpoint_send.c:25 esp_mqtt_client_publish() devuelve error
+
 cosas que estan hardcodeadas:
 <br>  -parte de app_main.c:mqtt_app_start:mqtt_cfg
 <br>  -la cantidad de sensores que quiero usar
