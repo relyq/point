@@ -10,4 +10,6 @@ idf_component_register(SRCS "app_main.c"
                             "wifi_prov_mgr/wifi_prov_mgr.c"
                             "wifi_prov_mgr/custom_data_handler.c"
                             "ota/http_ota.c"
-                    INCLUDE_DIRS ".")
+                    INCLUDE_DIRS "."
+                    EMBED_TXTFILES ${project_dir}/server_certs/ca_cert.pem
+                    )

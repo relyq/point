@@ -66,9 +66,9 @@ void app_main(void) {
   esp_log_level_set("OUTBOX", ESP_LOG_VERBOSE);
 
   /* Initialize NVS partition */
-  esp_err_t ret = nvs_flash_init();
-  if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
-      ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+  esp_err_t err = nvs_flash_init();
+  if (err == ESP_ERR_NVS_NO_FREE_PAGES ||
+      err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
     /* NVS partition was truncated
      * and needs to be erased */
     ESP_ERROR_CHECK(nvs_flash_erase());
@@ -237,38 +237,18 @@ void app_main(void) {
 
   nvs_handle_t nvs_handle;
 
-  // write update flag to nvs
-  bool gpio_update = !gpio_get_level(GPIO_NUM_0);
-  err = nvs_open("update", NVS_READWRITE, &nvs_handle);
-
-  if (err != ESP_OK) {
-    ESP_LOGE(TAG, "error (%s) opening NVS handle", esp_err_to_name(err));
-  } else {
-    err = nvs_set_u8(nvs_handle, "update_flag", gpio_update);
-
-    if (err != ESP_OK) {
-      ESP_LOGE(TAG, "error (%s) writing value to nvs", esp_err_to_name(err));
-    }
-
-    err = nvs_commit(nvs_handle);
-
-    if (err != ESP_OK) {
-      ESP_LOGE(TAG, "error (%s) committing to nvs", esp_err_to_name(err));
-    }
-
-    nvs_close(nvs_handle);
-  }
-
   // read update flag from nvs
-  // nvs_handle_t nvs_handle;
-  err = nvs_open("update", NVS_READONLY, &nvs_handle);
+  err = nvs_open("update", NVS_READWRITE, &nvs_handle);
 
   if (err != ESP_OK) {
     ESP_LOGE(TAG, "error (%s) opening NVS handle", esp_err_to_name(err));
   } else {
     err = nvs_get_u8(nvs_handle, "update_flag", &update_available);
 
-    if (err != ESP_OK) {
+    if (err == ESP_ERR_NVS_NOT_FOUND) {
+      ESP_LOGI(TAG, "update_flag not found. initiializing");
+      ESP_ERROR_CHECK(nvs_set_u8(nvs_handle, "update_flag", 0));
+    } else if (err != ESP_OK) {
       ESP_LOGE(TAG, "error (%s) reading value from nvs", esp_err_to_name(err));
     }
 

@@ -1,6 +1,8 @@
 #include "driver/gpio.h"
 #include "mqttpoint.h"
 
+extern void perform_ota_update();
+
 static const char *TAG = "MQTTPOINT_RECEIVE";
 
 void mqttpoint_receive(esp_mqtt_client_handle_t client,
@@ -17,6 +19,10 @@ void mqttpoint_receive(esp_mqtt_client_handle_t client,
   } else {
     ESP_LOGE(TAG, "IdMsg is not string or is null");
     strcpy(str_idmsg, "error");
+  }
+
+  if (strcmp(event->topic, "test/f008d1d4faf0/update")) {
+    perform_ota_update();
   }
 
   /* esto me crashea el dispositivo. de todas formas tengo que cambiarlo

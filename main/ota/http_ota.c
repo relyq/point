@@ -20,46 +20,27 @@ extern const uint8_t server_cert_pem_end[] asm("_binary_ca_cert_pem_end");
 
 static void print_sha256(const uint8_t *image_hash, const char *label);
 static esp_err_t _http_event_handler(esp_http_client_event_t *evt);
+static esp_err_t nvs_update_flag_set(void);
+static esp_err_t nvs_update_flag_clear(void);
 
-void simple_ota_example_task(void *pvParameter) {
+void ota_task(void *pvParameter) {
   ESP_LOGI(TAG, "Starting OTA task");
 
   esp_http_client_config_t config = {
-      .url = "http://192.168.1.200/www/ota/simple_ota.bin",
+      .url = "http://192.168.1.200/www/ota/mqtt_point.bin",
       .cert_pem = (char *)server_cert_pem_start,
       .event_handler = _http_event_handler,
       .keep_alive_enable = true,
   };
 
+  // TEST ONLY
   config.skip_cert_common_name_check = true;
 
   esp_err_t ret = esp_https_ota(&config);
   if (ret == ESP_OK) {
     ESP_LOGI(TAG, "firmware updated successfully; rebooting");
 
-    // set update_flag to zero
-    nvs_handle_t nvs_handle;
-    esp_err_t err;
-
-    err = nvs_open("update", NVS_READWRITE, &nvs_handle);
-
-    if (err != ESP_OK) {
-      ESP_LOGE(TAG, "error (%s) opening NVS handle", esp_err_to_name(err));
-    } else {
-      err = nvs_set_u8(nvs_handle, "update_flag", 0);
-
-      if (err != ESP_OK) {
-        ESP_LOGE(TAG, "error (%s) writing value to nvs", esp_err_to_name(err));
-      }
-
-      err = nvs_commit(nvs_handle);
-
-      if (err != ESP_OK) {
-        ESP_LOGE(TAG, "error (%s) committing to nvs", esp_err_to_name(err));
-      }
-
-      nvs_close(nvs_handle);
-    }
+    ESP_ERROR_CHECK(nvs_update_flag_clear());
 
     esp_restart();
   } else {
@@ -77,6 +58,8 @@ void perform_ota_update(void) {
       ESP_PARTITION_SUBTYPE_APP_FACTORY) {
     ESP_LOGI(TAG, "rebooting to factory");
 
+    ESP_ERROR_CHECK(nvs_update_flag_set());
+
     esp_partition_iterator_t partition_iterator = esp_partition_find(
         ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_APP_FACTORY, NULL);
 
@@ -92,8 +75,7 @@ void perform_ota_update(void) {
   // running partition should now be factory, run ota task
   // idk why espressif chose a task instead of a simple function
   // i might change this later
-  xTaskCreate(&simple_ota_example_task, "ota_example_task", 8192, NULL, 5,
-              NULL);
+  xTaskCreate(&ota_task, "ota_task", 8192, NULL, 5, NULL);
 }
 
 void get_sha256_of_partitions(void) {
@@ -117,6 +99,66 @@ void print_running_partition(void) {
            esp_ota_get_running_partition()->label,
            esp_ota_get_running_partition()->subtype,
            esp_ota_get_running_partition()->address);
+}
+
+static esp_err_t nvs_update_flag_set(void) {
+  nvs_handle_t nvs_handle;
+
+  // write update flag to nvs
+  esp_err_t err = nvs_open("update", NVS_READWRITE, &nvs_handle);
+
+  if (err != ESP_OK) {
+    ESP_LOGE(TAG, "error (%s) opening NVS handle", esp_err_to_name(err));
+    return err;
+  } else {
+    err = nvs_set_u8(nvs_handle, "update_flag", 1);
+
+    if (err != ESP_OK) {
+      ESP_LOGE(TAG, "error (%s) writing value to nvs", esp_err_to_name(err));
+      return err;
+    }
+
+    err = nvs_commit(nvs_handle);
+
+    if (err != ESP_OK) {
+      ESP_LOGE(TAG, "error (%s) committing to nvs", esp_err_to_name(err));
+      return err;
+    }
+
+    nvs_close(nvs_handle);
+  }
+
+  return ESP_OK;
+}
+
+static esp_err_t nvs_update_flag_clear(void) {
+  nvs_handle_t nvs_handle;
+
+  // write update flag to nvs
+  esp_err_t err = nvs_open("update", NVS_READWRITE, &nvs_handle);
+
+  if (err != ESP_OK) {
+    ESP_LOGE(TAG, "error (%s) opening NVS handle", esp_err_to_name(err));
+    return err;
+  } else {
+    err = nvs_set_u8(nvs_handle, "update_flag", 0);
+
+    if (err != ESP_OK) {
+      ESP_LOGE(TAG, "error (%s) writing value to nvs", esp_err_to_name(err));
+      return err;
+    }
+
+    err = nvs_commit(nvs_handle);
+
+    if (err != ESP_OK) {
+      ESP_LOGE(TAG, "error (%s) committing to nvs", esp_err_to_name(err));
+      return err;
+    }
+
+    nvs_close(nvs_handle);
+  }
+
+  return ESP_OK;
 }
 
 static void print_sha256(const uint8_t *image_hash, const char *label) {
