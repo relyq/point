@@ -36,6 +36,8 @@ void ota_task(void *pvParameter) {
   // TEST ONLY
   config.skip_cert_common_name_check = true;
 
+  // esp_wifi_set_ps(WIFI_PS_NONE);
+
   esp_err_t ret = esp_https_ota(&config);
   if (ret == ESP_OK) {
     ESP_LOGI(TAG, "firmware updated successfully; rebooting");
