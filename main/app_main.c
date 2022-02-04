@@ -60,6 +60,7 @@ void app_main(void) {
   esp_log_level_set("esp-tls", ESP_LOG_VERBOSE);
   esp_log_level_set("MQTT_CLIENT", ESP_LOG_VERBOSE);
   esp_log_level_set("MQTT_EXAMPLE", ESP_LOG_VERBOSE);
+  esp_log_level_set("MQTT_EVENT_HANDLER", ESP_LOG_ERROR);
   esp_log_level_set("TRANSPORT_TCP", ESP_LOG_VERBOSE);
   esp_log_level_set("TRANSPORT_SSL", ESP_LOG_VERBOSE);
   esp_log_level_set("TRANSPORT", ESP_LOG_VERBOSE);
@@ -229,9 +230,6 @@ void app_main(void) {
   // when a new update is available a flag is written to nvs so the
   // update-available state is remembered after rebooting
   print_running_partition();
-
-  gpio_set_direction(GPIO_NUM_0, GPIO_MODE_INPUT);
-  gpio_set_pull_mode(GPIO_NUM_0, GPIO_PULLUP_ONLY);
 
   bool update_available = 0;
 
