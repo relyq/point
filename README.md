@@ -4,6 +4,8 @@ todo:
 
 textfiles embebidos en CMakeLists.txt y main/CMakeLists.txt
 
+que hacer si el dispositivo prende y no puede conectarse a wifi? (se movio a otro lugar/cambio la red)
+
 topicos a los que envio y recibo mqttpoint/mqttpoint_send.c mqttpoint/mqttpoint_receive.c
 
 mqttpoint/mqtt_event_handler.c:12
