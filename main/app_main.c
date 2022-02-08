@@ -36,7 +36,6 @@
 #include "nvs_flash.h"
 #include "ota/http_ota.h"
 #include "sdkconfig.h"
-#include "sensors/sensors.h"
 #include "wifi_prov_mgr/wifi_prov_mgr.h"
 #include "wifi_provisioning/manager.h"
 #include "wifi_provisioning/scheme_ble.h"
@@ -258,12 +257,7 @@ void app_main(void) {
     perform_ota_update();
   }
 
-  gpio_set_direction(2, GPIO_MODE_INPUT_OUTPUT);
-
   xMQTTDHTQueue = xQueueCreate(3, sizeof(struct sensor_msg));
 
-  xTaskCreate(&DHT_task, "DHT_task", 2048, NULL, 5, NULL);
-  // xTaskCreate(&DHT_test0, "DHT_test0", 2048, NULL, 5, NULL);
-  // xTaskCreate(&DHT_test1, "DHT_test1", 2048, NULL, 5, NULL);
   xTaskCreate(&mqtt_app_start, "mqtt_app_start", 4096, NULL, 5, NULL);
 }
