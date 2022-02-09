@@ -1,6 +1,7 @@
 #include "mqttpoint.h"
 
 static const char *TAG = "MQTT_APP";
+extern char mac_str[13];
 
 #if CONFIG_BROKER_CERTIFICATE_OVERRIDDEN == 1
 static const uint8_t mqtt_broker_pem_start[] =
@@ -31,6 +32,13 @@ void mqtt_app_start(void *pvParameter) {
   esp_mqtt_client_start(client);
 
   vTaskDelay(pdMS_TO_TICKS(1000));
+
+  // no deberia estar hardcodeado
+  char topic_base[64] = "test/";
+  strcat(topic_base, mac_str);
+  char topic_update[64];
+  strcpy(topic_update, topic_base);
+  strcat(topic_update, "/update");
 
   esp_mqtt_client_subscribe(client, "test/f008d1d4faf0/update", 0);
 

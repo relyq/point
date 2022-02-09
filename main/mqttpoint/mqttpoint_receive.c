@@ -2,6 +2,7 @@
 #include "mqttpoint.h"
 
 extern void perform_ota_update();
+extern char mac_str[13];
 
 static const char *TAG = "MQTTPOINT_RECEIVE";
 
@@ -21,31 +22,14 @@ void mqttpoint_receive(esp_mqtt_client_handle_t client,
     strcpy(str_idmsg, "error");
   }
 
-  if (strcmp(event->topic, "test/f008d1d4faf0/update")) {
+  char topic_base[64] = "test/";
+  strcat(topic_base, mac_str);
+  char topic_update[64];
+  strcpy(topic_update, topic_base);
+  strcat(topic_update, "/update");
+
+  // tengo que cambiarlo
+  if (strcmp(event->topic, topic_update)) {
     perform_ota_update();
   }
-
-  /* esto me crashea el dispositivo. de todas formas tengo que cambiarlo
-  char *str_response_led;
-  cJSON *json_led = cJSON_CreateObject();
-  cJSON_AddStringToObject(json_led, "IdMsg", str_idmsg);
-  cJSON_AddStringToObject(json_led, "Status", str_response_status);
-  str_response_led = cJSON_Print(json_led);
-
-  cJSON_Delete(json_led);
-  cJSON_Delete(json_cmd);
-
-  char cmd_topic[128];
-  char response_topic[128];
-
-  // responde al cmdAck del mismo tópico del que llegó el mensaje
-  sprintf(cmd_topic, "%.*s", event->topic_len, event->topic);
-  char *pch = strstr(cmd_topic, "cmd/");
-  memcpy(response_topic, cmd_topic, pch - cmd_topic);
-  memcpy(response_topic + (pch - cmd_topic), "cmdAck/", strlen("cmdAck/"));
-  strcpy(response_topic + (pch - cmd_topic) + strlen("cmdAck/"),
-         pch + strlen("cmd/"));
-
-  esp_mqtt_client_publish(client, response_topic, str_response_led, 0, 1, 0);
-  */
 }

@@ -50,6 +50,8 @@ EventGroupHandle_t wifi_event_group;
 
 QueueHandle_t xMQTTDHTQueue;
 
+char mac_str[13];
+
 void app_main(void) {
   ESP_LOGI(TAG, "[APP] Startup..");
   ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
@@ -255,6 +257,16 @@ void app_main(void) {
   if (update_available) {
     ESP_LOGI(TAG, "update available; performing ota");
     perform_ota_update();
+  }
+
+  uint8_t mac[6];
+  err = esp_efuse_mac_get_default(mac);
+  if (err == ESP_OK) {
+    sprintf(mac_str, "%02x%02x%02x%02x%02x%02x", mac[0], mac[1], mac[2], mac[3],
+            mac[4], mac[5]);
+    ESP_LOGD(TAG, "%s", mac_str);
+  } else {
+    ESP_LOGE(TAG, "esp_efuse_mac_get_default: %s", esp_err_to_name(err));
   }
 
   xMQTTDHTQueue = xQueueCreate(3, sizeof(struct sensor_msg));
