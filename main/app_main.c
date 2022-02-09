@@ -256,6 +256,16 @@ void app_main(void) {
     ESP_LOGE(TAG, "esp_efuse_mac_get_default: %s", esp_err_to_name(err));
   }
 
+  uint8_t mac[6];
+  err = esp_efuse_mac_get_default(mac);
+  if (err == ESP_OK) {
+    sprintf(mac_str, "%02x%02x%02x%02x%02x%02x", mac[0], mac[1], mac[2], mac[3],
+            mac[4], mac[5]);
+    ESP_LOGD(TAG, "%s", mac_str);
+  } else {
+    ESP_LOGE(TAG, "esp_efuse_mac_get_default: %s", esp_err_to_name(err));
+  }
+
   xMQTTDHTQueue = xQueueCreate(3, sizeof(struct sensor_msg));
 
   xTaskCreate(&mqtt_app_start, "mqtt_app_start", 4096, NULL, 5, NULL);

@@ -1,7 +1,10 @@
 #include "driver/gpio.h"
 #include "mqttpoint.h"
 
+<<<<<<< HEAD
 extern void perform_ota_update(const char *url);
+== == == = extern void perform_ota_update();
+>>>>>>> 8974dc2 (mac_str global)
 extern char mac_str[13];
 
 static const char *TAG = "MQTTPOINT_RECEIVE";
