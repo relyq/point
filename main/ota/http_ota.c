@@ -1,9 +1,7 @@
 #include "http_ota.h"
 
-#include <stdbool.h>
 #include <stdint.h>
 
-#include "esp_err.h"
 #include "esp_http_client.h"
 #include "esp_https_ota.h"
 #include "esp_log.h"
@@ -20,6 +18,7 @@ extern const uint8_t server_cert_pem_end[] asm("_binary_ca_cert_pem_end");
 
 static void print_sha256(const uint8_t *image_hash, const char *label);
 static esp_err_t _http_event_handler(esp_http_client_event_t *evt);
+static esp_err_t nvs_ota_url_set(const char *url);
 static esp_err_t nvs_update_flag_set(void);
 static esp_err_t nvs_update_flag_clear(void);
 
@@ -36,12 +35,15 @@ void ota_task(char *url) {
   // TEST ONLY
   config.skip_cert_common_name_check = true;
 
-  // url was malloc'd inside nvs_ota_url_set()
-  free(url);
   // disable wifi power saving
   // esp_wifi_set_ps(WIFI_PS_NONE);
 
   esp_err_t ret = esp_https_ota(&config);
+
+  // url was malloc'd inside nvs_ota_url_set()
+  // don't really need to free as we're about to restart anyway
+  free(url);
+
   if (ret == ESP_OK) {
     ESP_LOGI(TAG, "firmware updated successfully; rebooting");
 
@@ -50,6 +52,7 @@ void ota_task(char *url) {
     esp_restart();
   } else {
     ESP_LOGE(TAG, "Firmware upgrade failed");
+    vTaskDelete(NULL);
   }
   while (1) {
     vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -63,7 +66,7 @@ void perform_ota_update(const char *url) {
       ESP_PARTITION_SUBTYPE_APP_FACTORY) {
     ESP_LOGI(TAG, "rebooting to factory");
 
-    ESP_ERROR_CHECK(nvs_set_ota_url(url));
+    ESP_ERROR_CHECK(nvs_ota_url_set(url));
 
     ESP_ERROR_CHECK(nvs_update_flag_set());
 
