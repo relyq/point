@@ -35,11 +35,6 @@ void ota_task(char *url) {
   // TEST ONLY
   config.skip_cert_common_name_check = true;
 
-<<<<<<< HEAD
-  == == == =
-               // url was malloc'd inside nvs_ota_url_set()
-      free(url);
->>>>>>> 5d779c5 (nvs functions & ota url)
   // disable wifi power saving
   // esp_wifi_set_ps(WIFI_PS_NONE);
 
