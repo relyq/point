@@ -36,15 +36,11 @@ void mqtt_app_start(void *pvParameter) {
   // no deberia estar hardcodeado
   char topic_base[64] = "test/";
   strcat(topic_base, mac_str);
-  char topic_update[64];
-  strcpy(topic_update, topic_base);
-  strcat(topic_update, "/update");
 
   char topic_cmd[64];
   strcpy(topic_cmd, topic_base);
   strcat(topic_cmd, "/cmd");
 
-  esp_mqtt_client_subscribe(client, topic_update, 0);
   esp_mqtt_client_subscribe(client, topic_cmd, 0);
 
   while (1) {
