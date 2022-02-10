@@ -3,6 +3,7 @@
 todo:
 
 tengo que probar subir un archivo al cloud y actualizar ota de ahi
+debería recordar el estado de las salidas antes de reiniciar
 
 textfiles embebidos en CMakeLists.txt y main/CMakeLists.txt
 
