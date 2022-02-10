@@ -47,9 +47,14 @@ static const char *TAG = "MQTT_POINT";
 const int WIFI_CONNECTED_EVENT = BIT0;
 EventGroupHandle_t wifi_event_group;
 
+extern esp_err_t nvs_ota_url_get(char *url);
+extern esp_err_t nvs_update_flag_get(bool *update_flag);
+
 #define PROV_TRANSPORT_BLE "ble"
 
 QueueHandle_t xMQTTDHTQueue;
+
+char mac_str[13];
 
 void app_main(void) {
   ESP_LOGI(TAG, "[APP] Startup..");
@@ -231,34 +236,28 @@ void app_main(void) {
   // update-available state is remembered after rebooting
   print_running_partition();
 
-  bool update_available = 0;
+  bool update_flag = 0;
 
-  nvs_handle_t nvs_handle;
+  ESP_ERROR_CHECK(nvs_update_flag_get(&update_flag));
 
-  // read update flag from nvs
-  err = nvs_open("update", NVS_READWRITE, &nvs_handle);
-
-  if (err != ESP_OK) {
-    ESP_LOGE(TAG, "error (%s) opening NVS handle", esp_err_to_name(err));
-  } else {
-    err = nvs_get_u8(nvs_handle, "update_flag", &update_available);
-
-    if (err == ESP_ERR_NVS_NOT_FOUND) {
-      ESP_LOGI(TAG, "update_flag not found. initiializing");
-      ESP_ERROR_CHECK(nvs_set_u8(nvs_handle, "update_flag", 0));
-    } else if (err != ESP_OK) {
-      ESP_LOGE(TAG, "error (%s) reading value from nvs", esp_err_to_name(err));
-    }
-
-    nvs_close(nvs_handle);
-  }
-
-  if (update_available) {
+  if (update_flag) {
     ESP_LOGI(TAG, "update available; performing ota");
-    perform_ota_update();
+    char *url = NULL;
+    nvs_ota_url_get(url);
+    perform_ota_update(url);
   }
 
-  gpio_set_direction(2, GPIO_MODE_INPUT_OUTPUT);
+  uint8_t mac[6];
+  err = esp_efuse_mac_get_default(mac);
+  if (err == ESP_OK) {
+    sprintf(mac_str, "%02x%02x%02x%02x%02x%02x", mac[0], mac[1], mac[2], mac[3],
+            mac[4], mac[5]);
+    ESP_LOGD(TAG, "%s", mac_str);
+  } else {
+    ESP_LOGE(TAG, "esp_efuse_mac_get_default: %s", esp_err_to_name(err));
+  }
+
+  gpio_set_direction(GPIO_NUM_2, GPIO_MODE_OUTPUT);
 
   xMQTTDHTQueue = xQueueCreate(3, sizeof(struct sensor_msg));
 
