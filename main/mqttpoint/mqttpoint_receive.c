@@ -1,10 +1,7 @@
 #include "driver/gpio.h"
 #include "mqttpoint.h"
 
-<<<<<<< HEAD
 extern void perform_ota_update(const char *url);
-== == == = extern void perform_ota_update();
->>>>>>> 8974dc2 (mac_str global)
 extern char mac_str[13];
 
 static const char *TAG = "MQTTPOINT_RECEIVE";
@@ -16,13 +13,6 @@ void mqttpoint_receive(esp_mqtt_client_handle_t client,
   // todo esto debería hacerlo de otra forma
   char topic_base[64] = "test/";
   strcat(topic_base, mac_str);
-<<<<<<< HEAD
-  == == == =
-
-               char topic_update[64];
-  strcpy(topic_update, topic_base);
-  strcat(topic_update, "/update");
->>>>>>> 630f3b0 (mensajes de cmd)
 
   char topic_cmd[64];
   strcpy(topic_cmd, topic_base);
