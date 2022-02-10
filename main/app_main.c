@@ -237,11 +237,11 @@ void app_main(void) {
 
   bool update_flag = 0;
 
-  ESP_ERR_CHECK(nvs_update_flag_get(&update_flag));
+  ESP_ERROR_CHECK(nvs_update_flag_get(&update_flag));
 
   if (update_flag) {
     ESP_LOGI(TAG, "update available; performing ota");
-    char *url;
+    char *url = NULL;
     nvs_ota_url_get(url);
     perform_ota_update(url);
   }
