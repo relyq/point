@@ -2,6 +2,8 @@
 
 todo:
 
+tengo que probar subir un archivo al cloud y actualizar ota de ahi
+
 textfiles embebidos en CMakeLists.txt y main/CMakeLists.txt
 
 que hacer si el dispositivo prende y no puede conectarse a wifi? (se movio a otro lugar/cambio la red)
