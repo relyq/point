@@ -14,10 +14,6 @@ void mqttpoint_receive(esp_mqtt_client_handle_t client,
   char topic_base[64] = "test/";
   strcat(topic_base, mac_str);
 
-  char topic_update[64];
-  strcpy(topic_update, topic_base);
-  strcat(topic_update, "/update");
-
   char topic_cmd[64];
   strcpy(topic_cmd, topic_base);
   strcat(topic_cmd, "/cmd");
@@ -43,7 +39,13 @@ void mqttpoint_receive(esp_mqtt_client_handle_t client,
           break;
         }
         case MSG_UPDATE: {
-          perform_ota_update();
+          if ((cJSON_IsString(cJSON_GetObjectItem(json_data, "url"))) &&
+              (cJSON_GetObjectItem(json_data, "url")->valuestring != NULL)) {
+            perform_ota_update(
+                cJSON_GetObjectItem(json_data, "url")->valuestring);
+          } else {
+            ESP_LOGE(TAG, "ota url is not a string or is NULL");
+          }
           break;
         }
       }
