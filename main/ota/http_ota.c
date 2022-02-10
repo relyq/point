@@ -1,9 +1,7 @@
 #include "http_ota.h"
 
-#include <stdbool.h>
 #include <stdint.h>
 
-#include "esp_err.h"
 #include "esp_http_client.h"
 #include "esp_https_ota.h"
 #include "esp_log.h"
@@ -20,14 +18,15 @@ extern const uint8_t server_cert_pem_end[] asm("_binary_ca_cert_pem_end");
 
 static void print_sha256(const uint8_t *image_hash, const char *label);
 static esp_err_t _http_event_handler(esp_http_client_event_t *evt);
+static esp_err_t nvs_ota_url_set(const char *url);
 static esp_err_t nvs_update_flag_set(void);
 static esp_err_t nvs_update_flag_clear(void);
 
-void ota_task(void *pvParameter) {
+void ota_task(char *url) {
   ESP_LOGI(TAG, "Starting OTA task");
 
   esp_http_client_config_t config = {
-      .url = "http://192.168.1.200/www/ota/mqtt_point.bin",
+      .url = url,
       .cert_pem = (char *)server_cert_pem_start,
       .event_handler = _http_event_handler,
       .keep_alive_enable = true,
@@ -36,9 +35,15 @@ void ota_task(void *pvParameter) {
   // TEST ONLY
   config.skip_cert_common_name_check = true;
 
+  // disable wifi power saving
   // esp_wifi_set_ps(WIFI_PS_NONE);
 
   esp_err_t ret = esp_https_ota(&config);
+
+  // url was malloc'd inside nvs_ota_url_set()
+  // don't really need to free as we're about to restart anyway
+  free(url);
+
   if (ret == ESP_OK) {
     ESP_LOGI(TAG, "firmware updated successfully; rebooting");
 
@@ -47,18 +52,21 @@ void ota_task(void *pvParameter) {
     esp_restart();
   } else {
     ESP_LOGE(TAG, "Firmware upgrade failed");
+    vTaskDelete(NULL);
   }
   while (1) {
     vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
 }
 
-void perform_ota_update(void) {
+void perform_ota_update(const char *url) {
   // it is not possible to write over running partition, therefore
   // if current partition is not factory, reboot to factory
   if (esp_ota_get_running_partition()->subtype !=
       ESP_PARTITION_SUBTYPE_APP_FACTORY) {
     ESP_LOGI(TAG, "rebooting to factory");
+
+    ESP_ERROR_CHECK(nvs_ota_url_set(url));
 
     ESP_ERROR_CHECK(nvs_update_flag_set());
 
@@ -77,7 +85,7 @@ void perform_ota_update(void) {
   // running partition should now be factory, run ota task
   // idk why espressif chose a task instead of a simple function
   // i might change this later
-  xTaskCreate(&ota_task, "ota_task", 8192, NULL, 5, NULL);
+  xTaskCreate(&ota_task, "ota_task", 8192, url, 5, NULL);
 }
 
 void get_sha256_of_partitions(void) {
@@ -101,6 +109,77 @@ void print_running_partition(void) {
            esp_ota_get_running_partition()->label,
            esp_ota_get_running_partition()->subtype,
            esp_ota_get_running_partition()->address);
+}
+
+static esp_err_t nvs_ota_url_set(const char *url) {
+  nvs_handle_t nvs_handle;
+
+  // write url to nvs
+  esp_err_t err = nvs_open("update", NVS_READWRITE, &nvs_handle);
+
+  if (err != ESP_OK) {
+    ESP_LOGE(TAG, "error (%s) opening NVS handle", esp_err_to_name(err));
+    return err;
+  } else {
+    err = nvs_set_str(nvs_handle, "ota_url", url);
+
+    if (err != ESP_OK) {
+      ESP_LOGE(TAG, "error (%s) writing value to nvs", esp_err_to_name(err));
+      return err;
+    }
+
+    err = nvs_commit(nvs_handle);
+
+    if (err != ESP_OK) {
+      ESP_LOGE(TAG, "error (%s) committing to nvs", esp_err_to_name(err));
+      return err;
+    }
+
+    nvs_close(nvs_handle);
+  }
+
+  return ESP_OK;
+}
+
+esp_err_t nvs_ota_url_get(char *url) {
+  nvs_handle_t nvs_handle;
+
+  // read url from nvs
+  esp_err_t err = nvs_open("update", NVS_READWRITE, &nvs_handle);
+
+  if (err != ESP_OK) {
+    ESP_LOGE(TAG, "error (%s) opening NVS handle", esp_err_to_name(err));
+    return err;
+  } else {
+    size_t url_len;
+    err = nvs_get_str(nvs_handle, "ota_url", NULL, &url_len);
+
+    if (err != ESP_OK) {
+      ESP_LOGE(TAG, "error (%s) reading value from nvs", esp_err_to_name(err));
+      return err;
+    }
+
+    url = malloc(url_len);
+
+    if (url == NULL) {
+      ESP_LOGE(TAG, "malloc failed");
+      return ESP_FAIL;
+    }
+
+    err = nvs_get_str(nvs_handle, "ota_url", url, &url_len);
+
+    if (err == ESP_ERR_NVS_NOT_FOUND) {
+      ESP_LOGI(TAG, "ota_url not found.");
+      return err;
+    } else if (err != ESP_OK) {
+      ESP_LOGE(TAG, "error (%s) reading value from nvs", esp_err_to_name(err));
+      return err;
+    }
+
+    nvs_close(nvs_handle);
+  }
+
+  return ESP_OK;
 }
 
 static esp_err_t nvs_update_flag_set(void) {
@@ -154,6 +233,32 @@ static esp_err_t nvs_update_flag_clear(void) {
 
     if (err != ESP_OK) {
       ESP_LOGE(TAG, "error (%s) committing to nvs", esp_err_to_name(err));
+      return err;
+    }
+
+    nvs_close(nvs_handle);
+  }
+
+  return ESP_OK;
+}
+
+esp_err_t nvs_update_flag_get(bool *update_flag) {
+  nvs_handle_t nvs_handle;
+
+  // read update flag from nvs
+  esp_err_t err = nvs_open("update", NVS_READWRITE, &nvs_handle);
+
+  if (err != ESP_OK) {
+    ESP_LOGE(TAG, "error (%s) opening NVS handle", esp_err_to_name(err));
+    return err;
+  } else {
+    err = nvs_get_u8(nvs_handle, "update_flag", update_flag);
+
+    if (err == ESP_ERR_NVS_NOT_FOUND) {
+      ESP_LOGI(TAG, "update_flag not found. initiializing");
+      ESP_ERROR_CHECK(nvs_set_u8(nvs_handle, "update_flag", 0));
+    } else if (err != ESP_OK) {
+      ESP_LOGE(TAG, "error (%s) reading value from nvs", esp_err_to_name(err));
       return err;
     }
 
