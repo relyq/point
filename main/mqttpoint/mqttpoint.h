@@ -9,6 +9,8 @@
 #include "freertos/task.h"
 #include "mqtt_client.h"
 
+enum idmsg { MSG_OUTPUT = 1, MSG_UPDATE };
+
 void mqttpoint_send(esp_mqtt_client_handle_t client);
 void mqttpoint_receive(esp_mqtt_client_handle_t client,
                        esp_mqtt_event_handle_t event);

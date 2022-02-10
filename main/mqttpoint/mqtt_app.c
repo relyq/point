@@ -40,7 +40,12 @@ void mqtt_app_start(void *pvParameter) {
   strcpy(topic_update, topic_base);
   strcat(topic_update, "/update");
 
-  esp_mqtt_client_subscribe(client, "test/f008d1d4faf0/update", 0);
+  char topic_cmd[64];
+  strcpy(topic_cmd, topic_base);
+  strcat(topic_cmd, "/cmd");
+
+  esp_mqtt_client_subscribe(client, topic_update, 0);
+  esp_mqtt_client_subscribe(client, topic_cmd, 0);
 
   while (1) {
     mqttpoint_send(client);
