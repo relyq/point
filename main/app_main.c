@@ -46,6 +46,9 @@ static const char *TAG = "MQTT_POINT";
 const int WIFI_CONNECTED_EVENT = BIT0;
 EventGroupHandle_t wifi_event_group;
 
+extern esp_err_t nvs_ota_url_get(char *url);
+extern esp_err_t nvs_update_flag_get(bool *update_flag);
+
 #define PROV_TRANSPORT_BLE "ble"
 
 QueueHandle_t xMQTTDHTQueue;
@@ -232,31 +235,15 @@ void app_main(void) {
   // update-available state is remembered after rebooting
   print_running_partition();
 
-  bool update_available = 0;
+  bool update_flag = 0;
 
-  nvs_handle_t nvs_handle;
+  ESP_ERR_CHECK(nvs_update_flag_get(&update_flag));
 
-  // read update flag from nvs
-  err = nvs_open("update", NVS_READWRITE, &nvs_handle);
-
-  if (err != ESP_OK) {
-    ESP_LOGE(TAG, "error (%s) opening NVS handle", esp_err_to_name(err));
-  } else {
-    err = nvs_get_u8(nvs_handle, "update_flag", &update_available);
-
-    if (err == ESP_ERR_NVS_NOT_FOUND) {
-      ESP_LOGI(TAG, "update_flag not found. initiializing");
-      ESP_ERROR_CHECK(nvs_set_u8(nvs_handle, "update_flag", 0));
-    } else if (err != ESP_OK) {
-      ESP_LOGE(TAG, "error (%s) reading value from nvs", esp_err_to_name(err));
-    }
-
-    nvs_close(nvs_handle);
-  }
-
-  if (update_available) {
+  if (update_flag) {
     ESP_LOGI(TAG, "update available; performing ota");
-    perform_ota_update();
+    char *url;
+    nvs_ota_url_get(url);
+    perform_ota_update(url);
   }
 
   uint8_t mac[6];
