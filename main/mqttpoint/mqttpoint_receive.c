@@ -44,4 +44,6 @@ void mqttpoint_receive(esp_mqtt_client_handle_t client,
       ESP_LOGE(TAG, "IdMsg is not an integer");
     }
   }
+
+  cJSON_Delete(json_data);
 }

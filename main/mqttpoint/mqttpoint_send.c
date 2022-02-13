@@ -24,6 +24,8 @@ void mqttpoint_send(esp_mqtt_client_handle_t client) {
   strcat(topic, MQTT_MSG.IdDevice);
   err = esp_mqtt_client_publish(client, topic, msgbuffer, 0, 1, 0);
 
+  free(msgbuffer);
+
   if (err) {
     // ESP_LOGE(TAG, "esp_mqtt_client_publish error");
   }
