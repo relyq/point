@@ -2,6 +2,8 @@
 
 todo:
 
+tengo que manejar el hecho de que mac_str puede fallar y no tener nada
+
 las queue para todos los sensores probablemente deberian ser iguales
 
 inicializar las struct de sensor_msg deberia ser una funcion
