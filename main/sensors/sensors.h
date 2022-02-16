@@ -12,6 +12,7 @@
 
 extern QueueHandle_t xMQTTDHTQueue;
 
-void DHT_task(void *pvParameter);
+void DHT_task(void* pvParameter);
+void bmp180_task(void* pvParameters);
 
 #endif  // __SENSORS_H__

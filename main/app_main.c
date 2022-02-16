@@ -257,10 +257,9 @@ void app_main(void) {
     ESP_LOGE(TAG, "esp_efuse_mac_get_default: %s", esp_err_to_name(err));
   }
 
-  gpio_set_direction(GPIO_NUM_2, GPIO_MODE_OUTPUT);
-
   xMQTTDHTQueue = xQueueCreate(3, sizeof(struct sensor_msg));
 
   xTaskCreate(&DHT_task, "DHT_task", 2048, NULL, 5, NULL);
   xTaskCreate(&mqtt_app_start, "mqtt_app_start", 4096, NULL, 5, NULL);
+  xTaskCreate(bmp180_task, "bmp180_task", 2048, NULL, 5, NULL);
 }
