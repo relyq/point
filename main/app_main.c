@@ -53,8 +53,9 @@ extern esp_err_t nvs_update_flag_get(bool *update_flag);
 #define PROV_TRANSPORT_BLE "ble"
 
 QueueHandle_t xMQTTDHTQueue;
+QueueHandle_t xMQTTBMPQueue;
 
-char mac_str[13];
+char mac_str[13] = NULL;
 
 void app_main(void) {
   ESP_LOGI(TAG, "[APP] Startup..");
@@ -257,7 +258,8 @@ void app_main(void) {
     ESP_LOGE(TAG, "esp_efuse_mac_get_default: %s", esp_err_to_name(err));
   }
 
-  xMQTTDHTQueue = xQueueCreate(3, sizeof(struct sensor_msg));
+  xMQTTDHTQueue = xQueueCreate(1, sizeof(struct sensor_msg));
+  xMQTTBMPQueue = xQueueCreate(1, sizeof(struct sensor_msg));
 
   xTaskCreate(&DHT_task, "DHT_task", 2048, NULL, 5, NULL);
   xTaskCreate(&mqtt_app_start, "mqtt_app_start", 4096, NULL, 5, NULL);
