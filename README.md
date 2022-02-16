@@ -2,6 +2,12 @@
 
 todo:
 
+las queue para todos los sensores probablemente deberian ser iguales
+
+inicializar las struct de sensor_msg deberia ser una funcion
+
+en los .c de los sensores bufsize en snprintf hardcodeado
+
 tengo que probar subir un archivo al cloud y actualizar ota de ahi
 
 debería recordar el estado de las salidas antes de reiniciar
