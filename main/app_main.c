@@ -55,7 +55,7 @@ extern esp_err_t nvs_update_flag_get(bool *update_flag);
 QueueHandle_t xMQTTDHTQueue;
 QueueHandle_t xMQTTBMPQueue;
 
-char mac_str[13] = NULL;
+char mac_str[13] = "";
 
 void app_main(void) {
   ESP_LOGI(TAG, "[APP] Startup..");
