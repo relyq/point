@@ -73,7 +73,8 @@ void perform_ota_update(const char *url) {
     esp_partition_iterator_t partition_iterator = esp_partition_find(
         ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_APP_FACTORY, NULL);
 
-    esp_partition_t *partition_factory = esp_partition_get(partition_iterator);
+    const esp_partition_t *partition_factory =
+        esp_partition_get(partition_iterator);
 
     esp_ota_set_boot_partition(partition_factory);
 
