@@ -1,6 +1,7 @@
+#include "dht.h"
 #include "sensors.h"
 
-static const char* TAG = "DHT1";
+static const char* TAG = "DHT";
 
 void DHT_task(void* pvParameter) {
   vTaskDelay(5000 / portTICK_PERIOD_MS);
