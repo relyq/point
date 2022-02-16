@@ -14,7 +14,5 @@
 extern QueueHandle_t xMQTTDHTQueue;
 
 void DHT_task(void *pvParameter);
-void DHT_test0(void *pvParameter);
-void DHT_test1(void *pvParameter);
 
 #endif  // __SENSORS_H__
