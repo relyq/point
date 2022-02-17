@@ -11,7 +11,7 @@ void mqttpoint_send(esp_mqtt_client_handle_t client) {
   struct sensor_msg MQTT_MSG;
   esp_err_t err;
 
-  if (xQueueReceive(xMQTTDHTQueue, &MQTT_MSG, pdMS_TO_TICKS(1000)) != pdPASS ||
+  if (xQueueReceive(xMQTTDHTQueue, &MQTT_MSG, pdMS_TO_TICKS(1000)) != pdPASS &&
       xQueueReceive(xMQTTBMPQueue, &MQTT_MSG, pdMS_TO_TICKS(1000)) != pdPASS) {
     ESP_LOGI(TAG, "nothing to send");
     return;
