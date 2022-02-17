@@ -2,6 +2,14 @@
 
 todo:
 
+deberia haber un sistema de prioridad para que un sensor que envia a 1hz no pueda bloquear a otro que envia a 0.5hz
+
+la lib de ADXL345 deberia usar la misma lib de i2c que los otros sensores
+
+en general la lib de ADXL345 es bastante chota
+
+tengo que calibrar el ADXL345
+
 tengo que manejar el hecho de que mac_str puede fallar y no tener nada
 
 las queue para todos los sensores probablemente deberian ser iguales

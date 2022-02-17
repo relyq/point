@@ -14,5 +14,6 @@ extern char mac_str[13];
 
 void DHT_task(void* pvParameter);
 void bmp180_task(void* pvParameters);
+void adxl345_task(void* pvParameters);
 
 #endif  // __SENSORS_H__

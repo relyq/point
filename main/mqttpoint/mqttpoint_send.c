@@ -4,6 +4,7 @@ static const char *TAG = "MQTTPOINT_SEND";
 
 extern QueueHandle_t xMQTTDHTQueue;
 extern QueueHandle_t xMQTTBMPQueue;
+extern QueueHandle_t xMQTTADXLQueue;
 
 void mqttpoint_send(esp_mqtt_client_handle_t client) {
   char *msgbuffer = NULL;
@@ -11,8 +12,11 @@ void mqttpoint_send(esp_mqtt_client_handle_t client) {
   struct sensor_msg MQTT_MSG;
   esp_err_t err;
 
+  // necesito alguna forma de darle prioridad a algunos mensajes pq tengo datos
+  // disponibles a diferentes rates para cada sensor
   if (xQueueReceive(xMQTTDHTQueue, &MQTT_MSG, pdMS_TO_TICKS(1000)) != pdPASS &&
-      xQueueReceive(xMQTTBMPQueue, &MQTT_MSG, pdMS_TO_TICKS(1000)) != pdPASS) {
+      xQueueReceive(xMQTTBMPQueue, &MQTT_MSG, pdMS_TO_TICKS(1000)) != pdPASS &&
+      xQueueReceive(xMQTTADXLQueue, &MQTT_MSG, pdMS_TO_TICKS(1000)) != pdPASS) {
     ESP_LOGI(TAG, "nothing to send");
     return;
   }

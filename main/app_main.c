@@ -54,6 +54,7 @@ extern esp_err_t nvs_update_flag_get(bool *update_flag);
 
 QueueHandle_t xMQTTDHTQueue;
 QueueHandle_t xMQTTBMPQueue;
+QueueHandle_t xMQTTADXLQueue;
 
 char mac_str[13] = "";
 
@@ -260,8 +261,10 @@ void app_main(void) {
 
   xMQTTDHTQueue = xQueueCreate(1, sizeof(struct sensor_msg));
   xMQTTBMPQueue = xQueueCreate(1, sizeof(struct sensor_msg));
+  xMQTTADXLQueue = xQueueCreate(1, sizeof(struct sensor_msg));
 
   xTaskCreate(&mqtt_app_start, "mqtt_app_start", 4096, NULL, 5, NULL);
   xTaskCreate(&DHT_task, "DHT_task", 2048, NULL, 5, NULL);
-  xTaskCreate(bmp180_task, "bmp180_task", 2048, NULL, 5, NULL);
+  xTaskCreate(&bmp180_task, "bmp180_task", 2048, NULL, 5, NULL);
+  xTaskCreate(&adxl345_task, "adxl345_task", 2048, NULL, 5, NULL);
 }
