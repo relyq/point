@@ -28,6 +28,6 @@ void DHT_task(void* pvParameter) {
     } else {
       ESP_LOGE(TAG, "could not read data from sensor: %d", err);
     }
-    vTaskDelay(2000 / portTICK_PERIOD_MS);
+    vTaskDelay(5000 / portTICK_PERIOD_MS);
   }
 }
