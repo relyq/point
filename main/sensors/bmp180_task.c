@@ -3,10 +3,21 @@
 
 static const char* TAG = "BMP180";
 
+extern QueueHandle_t xMQTTBMPQueue;
+
 #define SDA_GPIO 16
 #define SCL_GPIO 17
 
 void bmp180_task(void* pvParameters) {
+  struct sensor_msg BMP180;
+
+  // todo esto podria ser una funcion que me inicialice el struct
+  strcpy(BMP180.DeviceClass, "09");  // deberia ser un enum
+  strcpy(BMP180.IdDevice, mac_str);
+  strcpy(BMP180.MsgType, "02");
+
+  esp_err_t err;
+
   // no se si esto deberia estar en app_main.c
   ESP_ERROR_CHECK(i2cdev_init());
 
@@ -20,18 +31,14 @@ void bmp180_task(void* pvParameters) {
     float temp;
     uint32_t pressure;
 
-    esp_err_t res =
-        bmp180_measure(&dev, &temp, &pressure, BMP180_MODE_STANDARD);
-    if (res != ESP_OK)
-      printf("Could not measure: %d\n", res);
-    else
-      /* float is used in printf(). you need non-default configuration in
-       * sdkconfig for ESP8266, which is enabled by default for this
-       * example. see sdkconfig.defaults.esp8266
-       */
-      printf("Temperature: %.2f degrees Celsius; Pressure: %d Pa\n", temp,
-             pressure);
+    err = bmp180_measure(&dev, &temp, &pressure, BMP180_MODE_STANDARD);
+    if (err == ESP_OK) {
+      snprintf(BMP180.MsgContent, 64, "T%05.2fP%d", temp, pressure);
+      xQueueSendToBack(xMQTTBMPQueue, &BMP180, 0);
+    } else {
+      ESP_LOGE(TAG, "Could not measure: %d", err);
+    }
 
-    vTaskDelay(pdMS_TO_TICKS(500));
+    vTaskDelay(pdMS_TO_TICKS(5000));
   }
 }

@@ -261,7 +261,7 @@ void app_main(void) {
   xMQTTDHTQueue = xQueueCreate(1, sizeof(struct sensor_msg));
   xMQTTBMPQueue = xQueueCreate(1, sizeof(struct sensor_msg));
 
-  xTaskCreate(&DHT_task, "DHT_task", 2048, NULL, 5, NULL);
   xTaskCreate(&mqtt_app_start, "mqtt_app_start", 4096, NULL, 5, NULL);
+  xTaskCreate(&DHT_task, "DHT_task", 2048, NULL, 5, NULL);
   xTaskCreate(bmp180_task, "bmp180_task", 2048, NULL, 5, NULL);
 }
