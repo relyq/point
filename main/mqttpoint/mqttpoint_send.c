@@ -2,15 +2,20 @@
 
 static const char *TAG = "MQTTPOINT_SEND";
 
+extern QueueHandle_t xMQTTDHTQueue;
+extern QueueHandle_t xMQTTBMPQueue;
+
 void mqttpoint_send(esp_mqtt_client_handle_t client) {
   char *msgbuffer = NULL;
   char topic[128] = "test/";
   struct sensor_msg MQTT_MSG;
   esp_err_t err;
 
-  extern QueueHandle_t xMQTTDHTQueue;
-
-  xQueueReceive(xMQTTDHTQueue, &MQTT_MSG, portMAX_DELAY);
+  if (xQueueReceive(xMQTTDHTQueue, &MQTT_MSG, pdMS_TO_TICKS(1000)) != pdPASS ||
+      xQueueReceive(xMQTTBMPQueue, &MQTT_MSG, pdMS_TO_TICKS(1000)) != pdPASS) {
+    ESP_LOGI(TAG, "nothing to send");
+    return;
+  }
 
   cJSON *mqtt_infomsg = cJSON_CreateObject();
   cJSON_AddStringToObject(mqtt_infomsg, "DeviceClass", MQTT_MSG.DeviceClass);
