@@ -5,8 +5,8 @@ static const char* TAG = "BMP180";
 
 extern QueueHandle_t xMQTTBMPQueue;
 
-#define SDA_GPIO 16
-#define SCL_GPIO 17
+#define SDA_GPIO 16  // rx2
+#define SCL_GPIO 17  // tx2
 
 void bmp180_task(void* pvParameters) {
   struct sensor_msg BMP180;

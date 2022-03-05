@@ -5,8 +5,8 @@ static const char* TAG = "ADXL345";
 
 extern QueueHandle_t xMQTTADXLQueue;
 
-#define SCL_PIN 17
-#define SDA_PIN 16
+#define SCL_PIN 17  // tx2
+#define SDA_PIN 16  // rx2
 
 void adxl345_task(void* pvParameters) {
   struct sensor_msg ADXL345;
