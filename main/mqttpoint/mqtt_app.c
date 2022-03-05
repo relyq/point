@@ -44,7 +44,7 @@ void mqtt_app_start(void *pvParameter) {
   esp_mqtt_client_subscribe(client, topic_cmd, 0);
 
   while (1) {
-    mqttpoint_send(client);
+    // mqttpoint_send(client);
 
     vTaskDelay(5000 / portTICK_PERIOD_MS);
   }

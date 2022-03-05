@@ -27,6 +27,12 @@ void mqttpoint_receive(esp_mqtt_client_handle_t client,
 
       switch (msg) {
         case MSG_OUTPUT: {
+          if (cJSON_IsBool(cJSON_GetObjectItem(json_data, "output"))) {
+            gpio_set_level(GPIO_NUM_2,
+                           cJSON_GetObjectItem(json_data, "output")->valueint);
+          } else {
+            ESP_LOGE(TAG, "output value is not bool");
+          }
           break;
         }
         case MSG_UPDATE: {

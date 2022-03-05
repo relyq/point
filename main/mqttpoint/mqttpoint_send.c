@@ -8,10 +8,6 @@ void mqttpoint_send(esp_mqtt_client_handle_t client) {
   struct sensor_msg MQTT_MSG;
   esp_err_t err;
 
-  extern QueueHandle_t xMQTTDHTQueue;
-
-  xQueueReceive(xMQTTDHTQueue, &MQTT_MSG, portMAX_DELAY);
-
   cJSON *mqtt_infomsg = cJSON_CreateObject();
   cJSON_AddStringToObject(mqtt_infomsg, "DeviceClass", MQTT_MSG.DeviceClass);
   cJSON_AddStringToObject(mqtt_infomsg, "IdDevice", MQTT_MSG.IdDevice);

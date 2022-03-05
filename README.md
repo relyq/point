@@ -2,6 +2,8 @@
 
 todo:
 
+estoy inicializando el output en app_main.c pero lo estoy usando en mqttpoin_receive.c
+
 hay un problema con el sistema de OTA: si le paso un char* allocado en el stack me crashea con segfault, necesito darle una string allocada en el heap, pero url solo esta malloc'd si se llamo nvs_ota_url_get(), o sea, si la update empezo en la particion de OTA.
 
 tengo que probar subir un archivo al cloud y actualizar ota de ahi
