@@ -24,6 +24,7 @@ static esp_err_t nvs_update_flag_clear(void);
 
 void ota_task(char *url) {
   ESP_LOGI(TAG, "Starting OTA task");
+  ESP_LOGI(TAG, "ota url: %s", url);
 
   esp_http_client_config_t config = {
       .url = url,
@@ -83,10 +84,18 @@ void perform_ota_update(const char *url) {
     }
   }
 
+  // should change this dirty fix
+  // there's a leak somewhere around here...
+  // i should either malloc in nvs_ota_url_get() or here not both bc then i'm
+  // not freeing both later
+  char *heap_url = malloc(sizeof(char) * strlen(url));
+
+  strcpy(heap_url, url);
+
   // running partition should now be factory, run ota task
   // idk why espressif chose a task instead of a simple function
   // i might change this later
-  xTaskCreate(&ota_task, "ota_task", 8192, url, 5, NULL);
+  xTaskCreate(&ota_task, "ota_task", 8192, heap_url, 5, NULL);
 }
 
 void get_sha256_of_partitions(void) {
@@ -142,7 +151,7 @@ static esp_err_t nvs_ota_url_set(const char *url) {
   return ESP_OK;
 }
 
-esp_err_t nvs_ota_url_get(char *url) {
+esp_err_t nvs_ota_url_get(char **url) {
   nvs_handle_t nvs_handle;
 
   // read url from nvs
@@ -160,14 +169,14 @@ esp_err_t nvs_ota_url_get(char *url) {
       return err;
     }
 
-    url = malloc(url_len);
+    *url = malloc(url_len);
 
-    if (url == NULL) {
+    if (*url == NULL) {
       ESP_LOGE(TAG, "malloc failed");
       return ESP_FAIL;
     }
 
-    err = nvs_get_str(nvs_handle, "ota_url", url, &url_len);
+    err = nvs_get_str(nvs_handle, "ota_url", *url, &url_len);
 
     if (err == ESP_ERR_NVS_NOT_FOUND) {
       ESP_LOGI(TAG, "ota_url not found.");

@@ -47,7 +47,7 @@ static const char *TAG = "MQTT_POINT";
 const int WIFI_CONNECTED_EVENT = BIT0;
 EventGroupHandle_t wifi_event_group;
 
-extern esp_err_t nvs_ota_url_get(char *url);
+extern esp_err_t nvs_ota_url_get(char **url);
 extern esp_err_t nvs_update_flag_get(bool *update_flag);
 
 #define PROV_TRANSPORT_BLE "ble"
@@ -245,8 +245,9 @@ void app_main(void) {
   if (update_flag) {
     ESP_LOGI(TAG, "update available; performing ota");
     char *url = NULL;
-    nvs_ota_url_get(url);
+    ESP_ERROR_CHECK(nvs_ota_url_get(&url));
     perform_ota_update(url);
+    // unreachable; we'll never return from perform_ota_update()
   }
 
   uint8_t mac[6];
@@ -265,6 +266,6 @@ void app_main(void) {
 
   xTaskCreate(&mqtt_app_start, "mqtt_app_start", 4096, NULL, 5, NULL);
   xTaskCreate(&DHT_task, "DHT_task", 2048, NULL, 5, NULL);
-  xTaskCreate(&bmp180_task, "bmp180_task", 2048, NULL, 5, NULL);
-  xTaskCreate(&adxl345_task, "adxl345_task", 2048, NULL, 5, NULL);
+  // xTaskCreate(&bmp180_task, "bmp180_task", 2048, NULL, 5, NULL);
+  // xTaskCreate(&adxl345_task, "adxl345_task", 2048, NULL, 5, NULL);
 }

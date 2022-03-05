@@ -32,6 +32,9 @@ void mqttpoint_receive(esp_mqtt_client_handle_t client,
         case MSG_UPDATE: {
           if ((cJSON_IsString(cJSON_GetObjectItem(json_data, "url"))) &&
               (cJSON_GetObjectItem(json_data, "url")->valuestring != NULL)) {
+            ESP_LOGI(TAG, "received ota order; starting update with url: %s",
+                     cJSON_GetObjectItem(json_data, "url")->valuestring);
+
             perform_ota_update(
                 cJSON_GetObjectItem(json_data, "url")->valuestring);
           } else {
