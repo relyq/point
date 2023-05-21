@@ -1,5 +1,9 @@
 # point
 
+i am aware there are exposed secrets. this is an old project and the secrets do not work anymore.
+
+----
+
 todo:
 
 deberia haber un sistema de prioridad para que un sensor que envia a 1hz no pueda bloquear a otro que envia a 0.5hz
